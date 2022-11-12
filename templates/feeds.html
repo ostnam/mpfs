@@ -49,7 +49,7 @@
                     <a href="{{ entry.link }}"> {{ entry.title }} </a>
                 </div>
                 <div class="entry_bottom">
-                    {{ entry. }}
+                    {{ feeds_dict[entry.feed].name }}, {{ entry.published.strftime("%H:%M %a %d %b %y") if entry.published else "Undated" }}
                 </div>
             </div>
             {% endfor %}

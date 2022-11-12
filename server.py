@@ -14,8 +14,10 @@ def index():
 def feeds():
     feeds = data_manager.get_subscribed_feeds()
     entries = data_manager.get_entries(feeds)
+    feeds_dict = {i.url: i for i in feeds}
     return flask.render_template(
         "feeds.html",
-        entries=entries
+        entries=entries,
+        feeds_dict=feeds_dict
     )
 
