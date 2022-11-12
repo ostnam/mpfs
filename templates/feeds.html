@@ -25,26 +25,35 @@
 
     div#entries {
         background-color: #FFFFFF;
+        flex-direction: column;
+        width: 1200px;
     }
 
     div.entry {
-    border: 2px solid #fff;
-    padding: 10px 20px 10px 20px;
-    margin-bottom: 10px;
-    margin-right: 2px;
-    overflow: hidden;
-    outline: none;
-    background-color: #F2F0F0;
+        border: 2px solid #fff;
+        max-width: 1000px;
+        padding: 10px 20px 10px 20px;
+        margin-bottom: 10px;
+        margin-right: 2px;
+        overflow: hidden;
+        outline: none;
+        background-color: #F2F0F0;
+}
+
+    .del_cross{
+        min-width: 50px;
+        font-size: 30px;
+        text-align: right;
 }
 
     div.feed {
-    border: 2px solid #fff;
-    padding: 10px 20px 10px 20px;
-    margin-bottom: 1px;
-    margin-right: 2px;
-    overflow: hidden;
-    outline: none;
-    background-color: #ffffff;
+        border: 2px solid #fff;
+        padding: 10px 20px 10px 20px;
+        margin-bottom: 1px;
+        margin-right: 2px;
+        overflow: hidden;
+        outline: none;
+        background-color: #ffffff;
 }
 </style>
 
@@ -62,9 +71,18 @@
             <div id="entries">
                 {% for entry in entries %}
                 <div class="entry">
-                    <div class="entry_top">
-                        <a href="{{ entry.link }}"> {{ entry.title }} </a>
-                    </div>
+                    <table border="0" width="100%" class="top_table">
+                        <tbody>
+                            <tr>
+                                <td class="entry_top">
+                                    <a href="{{ entry.link }}"> <b> {{ entry.title }} </b> </a>
+                                </td>
+                                <td class="del_cross">
+                                    🞫
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                     <div class="entry_bottom">
                         {{ feeds_dict[entry.feed].name }}, {{ entry.published.strftime("%H:%M %a %d %b %y") if entry.published else "Undated" }}
                     </div>
