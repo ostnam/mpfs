@@ -1,10 +1,21 @@
-from flask import Flask, render_template
+import flask
 
 import feed
+import datamanager
 
-app = Flask(__name__)
+app = flask.Flask(__name__)
+data_manager = datamanager.DataManager()
 
 @app.route("/")
 def index():
-    return render_template("feeds.html",
-            entries=feed.refresh_feed("http://feeds.arstechnica.com/arstechnica/index"))
+    return flask.redirect(flask.url_for("/feeds"))
+
+@app.route("/feeds")
+def feeds():
+    feeds = data_manager.get_subscribed_feeds()
+    entries = data_manager.get_entries(feeds)
+    return flask.render_template(
+        "feeds.html",
+        entries=entries
+    )
+

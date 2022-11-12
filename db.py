@@ -1,11 +1,11 @@
 import sqlite3
-from typing import Optional, List
+from typing import List
 
-from feed import FeedEntry
+from feed import FeedEntry, Feed
 
 class FeedDb:
     def __init__(self):
-        self.conn = sqlite3.connect("feeds.db")
+        self.conn = sqlite3.connect("feeds.db", check_same_thread=False)
         self.init_db()
 
     def init_db(self):
@@ -16,6 +16,14 @@ class FeedDb:
                 published text,
                 seen int,
                 feed text
+            );
+        """)
+
+        self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS feeds (
+                name text NOT NULL,
+                url text NOT NULL,
+                last_update text
             );
         """)
 
@@ -39,11 +47,12 @@ class FeedDb:
         """, entry.to_sql())
 
 
-    def get_feeds(self):
-        pass
+    def get_feeds(self) -> List[Feed]:
+        raw = self.conn.execute("SELECT * FROM feeds;")
+        return [Feed.from_sql(i) for i in raw]
 
-    def save_feed(self):
-        pass
-
-    def delete_feed(self):
-        pass
+    def save_feed(self, feed: Feed):
+        self.conn.execute("""
+            INSERT INTO feeds
+            VALUES (?, ?, ?);
+        """, feed.to_sql())
