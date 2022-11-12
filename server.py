@@ -1,3 +1,5 @@
+import os
+
 import flask
 import flask_login
 
@@ -7,7 +9,7 @@ import datamanager
 app = flask.Flask(__name__)
 data_manager = datamanager.DataManager()
 
-app.secret_key = b"6de9bbfe2e1acf239e2f"
+app.secret_key = os.environ["MPFS_SESSION_KEY"]
 
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
