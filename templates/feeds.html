@@ -1,10 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
+
+<style type="text/css">
+    div#main {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        flex: 1;
+        min-height: 0;
+    }
+
+    div#leftbar {
+        max-width: 400px;
+        min-width: 170px;
+        width: 270px;
+        display: flex;
+        flex-direction: column;
+        background-color: #f8f8f8;
+    }
+
+    div.entries {
+        background-color: #DCDCDC;
+    }
+
+    div#entry {
+    border: 2px solid #fff;
+    padding: 10px 20px 10px 20px;
+    margin-bottom: 1px;
+    margin-right: 2px;
+    overflow: hidden;
+    outline: none;
+    background-color: #ffffff;
+}
+</style>
+
 <head>
 </head>
 <body>
-    {% for entry in entries %}
-    <p><a href="{{ entry.link }}"> {{ entry.title }}</a></p>
-    {% endfor %}
+    <div id="main">
+        <div id="leftbar">
+            <div> yo </div>
+        </div>
+
+        <div id="entries">
+            {% for entry in entries %}
+            <div class="entry">
+                <div class="entry_top">
+                    <a href="{{ entry.link }}"> {{ entry.title }} </a>
+                </div>
+                <div class="entry_bottom">
+                    {{ entry. }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
 </body>
 </html>
