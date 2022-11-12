@@ -2,6 +2,10 @@
 <html lang="en">
 
 <style type="text/css">
+    * {
+        font-size: 20px;
+    }
+
     div#main {
         width: 100%;
         display: flex;
@@ -19,11 +23,21 @@
         background-color: #f8f8f8;
     }
 
-    div.entries {
-        background-color: #DCDCDC;
+    div#entries {
+        background-color: #FFFFFF;
     }
 
-    div#entry {
+    div.entry {
+    border: 2px solid #fff;
+    padding: 10px 20px 10px 20px;
+    margin-bottom: 10px;
+    margin-right: 2px;
+    overflow: hidden;
+    outline: none;
+    background-color: #F2F0F0;
+}
+
+    div.feed {
     border: 2px solid #fff;
     padding: 10px 20px 10px 20px;
     margin-bottom: 1px;
@@ -34,26 +48,29 @@
 }
 </style>
 
-<head>
-</head>
-<body>
-    <div id="main">
-        <div id="leftbar">
-            <div> yo </div>
-        </div>
+    <head>
+    </head>
 
-        <div id="entries">
-            {% for entry in entries %}
-            <div class="entry">
-                <div class="entry_top">
-                    <a href="{{ entry.link }}"> {{ entry.title }} </a>
-                </div>
-                <div class="entry_bottom">
-                    {{ feeds_dict[entry.feed].name }}, {{ entry.published.strftime("%H:%M %a %d %b %y") if entry.published else "Undated" }}
-                </div>
+    <body>
+        <div id="main">
+            <div id="leftbar">
+                {% for feed in feeds_dict.values() %}
+                <div class=feed> {{ feed.name }} </div>
+                {% endfor %}
             </div>
-            {% endfor %}
+
+            <div id="entries">
+                {% for entry in entries %}
+                <div class="entry">
+                    <div class="entry_top">
+                        <a href="{{ entry.link }}"> {{ entry.title }} </a>
+                    </div>
+                    <div class="entry_bottom">
+                        {{ feeds_dict[entry.feed].name }}, {{ entry.published.strftime("%H:%M %a %d %b %y") if entry.published else "Undated" }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-    </div>
-</body>
+    </body>
 </html>
