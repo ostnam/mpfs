@@ -52,3 +52,12 @@ def feeds():
 def logout():
     flask_login.logout_user()
     return "logged out"
+
+@app.template_global()
+def static_include(filename):
+    fullpath = os.path.join("./static", filename)
+    with open(fullpath, 'r') as f:
+        return f.read()
+
+if __name__ == "__main__":
+    app.run(port=5000)
