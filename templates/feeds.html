@@ -1,6 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 
+    <script type="text/javascript">
+        "use strict";
+
+        class FeedEntry {
+            constructor(json) {
+                this.title = json.title;
+                this.link = json.link;
+                this.published = Date.parse(json.published);
+                this.seen = json.seen;
+                this.feed = json.feed;
+            }
+        }
+
+        class Feed {
+            entries = new Array();
+        }
+    </script>
+
 <style type="text/css">
     * {
         font-size: 20px;
@@ -54,42 +72,42 @@
         overflow: hidden;
         outline: none;
         background-color: #ffffff;
-}
+    }
 </style>
 
 <head>
     <title>MPFS</title>
 </head>
 
-    <body>
-        <div id="main">
-            <div id="leftbar">
-                {% for feed in feeds_dict.values() %}
-                <div class=feed> {{ feed.name }} </div>
-                {% endfor %}
-            </div>
-
-            <div id="entries">
-                {% for entry in entries %}
-                <div class="entry">
-                    <table border="0" width="100%" class="top_table">
-                        <tbody>
-                            <tr>
-                                <td class="entry_top">
-                                    <a href="{{ entry.link }}"> <b> {{ entry.title }} </b> </a>
-                                </td>
-                                <td class="del_cross">
-                                    🞫
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div class="entry_bottom">
-                        {{ feeds_dict[entry.feed].name }}, {{ entry.published.strftime("%H:%M %a %d %b %y") if entry.published else "Undated" }}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+<body>
+    <div id="main">
+        <div id="leftbar">
+            {% for feed in feeds_dict.values() %}
+            <div class=feed> {{ feed.name }} </div>
+            {% endfor %}
         </div>
-    </body>
+
+        <div id="entries">
+            {% for entry in entries %}
+            <div class="entry">
+                <table border="0" width="100%" class="top_table">
+                    <tbody>
+                        <tr>
+                            <td class="entry_top">
+                                <a href="{{ entry.link }}"> <b> {{ entry.title }} </b> </a>
+                            </td>
+                            <td class="del_cross">
+                                🞫
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="entry_bottom">
+                    {{ feeds_dict[entry.feed].name }}, {{ entry.published.strftime("%H:%M %a %d %b %y") if entry.published else "Undated" }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
 </html>
