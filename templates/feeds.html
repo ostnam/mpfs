@@ -5,7 +5,9 @@
         <script type="text/javascript">
             {{ static_include("feeds.js") | safe }}
 
-            let feed = new Feed({{ entries|tojson|safe }});
+            window.onload = () => feeds_main(
+                {{ entries | tojson | safe }},
+                {{ feeds  | tojson | safe }});
         </script>
     {% endblock %}
 
@@ -72,31 +74,12 @@
 <body>
     <div id="main">
         <div id="leftbar">
-            {% for feed in feeds_dict.values() %}
+            {% for feed in feeds %}
             <div class=feed> {{ feed.name }} </div>
             {% endfor %}
         </div>
 
         <div id="entries">
-            {% for entry in entries %}
-            <div class="entry">
-                <table border="0" width="100%" class="top_table">
-                    <tbody>
-                        <tr>
-                            <td class="entry_top">
-                                <a href="{{ entry.link }}"> <b> {{ entry.title }} </b> </a>
-                            </td>
-                            <td class="del_cross">
-                                🞫
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="entry_bottom">
-                    {{ feeds_dict[entry.feed].name }}, {{ entry.published.strftime("%H:%M %a %d %b %y") if entry.published else "Undated" }}
-                </div>
-            </div>
-            {% endfor %}
         </div>
     </div>
 </body>
