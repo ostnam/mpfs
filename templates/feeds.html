@@ -4,6 +4,8 @@
     {% block javascript %}
         <script type="text/javascript">
             {{ static_include("feeds.js") | safe }}
+
+            let feed = new Feed({{ entries|tojson|safe }});
         </script>
     {% endblock %}
 

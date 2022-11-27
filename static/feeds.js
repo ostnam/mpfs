@@ -12,6 +12,8 @@ class FeedEntry {
 
 class Feed {
     entries = new Array();
-}
 
-console.log("hello helka!");
+    constructor(entries) {
+        this.entries = entries.map(entry => new FeedEntry(entry));
+    }
+}
