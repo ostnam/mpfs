@@ -44,8 +44,15 @@ class FeedDb:
         self.conn.execute("""
             INSERT INTO entries
             VALUES (?, ?, ?, ?, ?);
-        """, entry.to_sql())
+            """, entry.to_sql())
+        self.conn.commit()
 
+    def save_entries(self, entries: List[FeedEntry]):
+        self.conn.executemany("""
+            INSERT INTO entries
+            VALUES (?, ?, ?, ?, ?);
+            """, [e.to_sql() for e in entries])
+        self.conn.commit()
 
     def get_feeds(self) -> List[Feed]:
         raw = self.conn.execute("SELECT * FROM feeds;")
@@ -55,4 +62,12 @@ class FeedDb:
         self.conn.execute("""
             INSERT INTO feeds
             VALUES (?, ?, ?);
-        """, feed.to_sql())
+            """, feed.to_sql())
+        self.conn.commit()
+
+    def mark_seen(self, link: str):
+        self.conn.execute("""
+            UPDATE entries
+            SET seen = 1
+            WHERE link = ?;
+            """, (link,))

@@ -27,16 +27,16 @@ class FeedEntry {
         let td1 = document.createElement("td");
         td1.setAttribute("class", "entry_top");
 
-
         let a = document.createElement("a");
         a.setAttribute("href", this.link);
 
         let title = document.createElement("b");
         title.innerHTML = this.title;
 
-        let td2 = document.createElement("td2");
+        let td2 = document.createElement("td");
         td2.setAttribute("class", "del_cross");
         td2.innerHTML = "🞫";
+        td2.onclick = () => this.mark_seen();
 
         let bottom = document.createElement("div");
         bottom.setAttribute("class", "entry_bottom");
@@ -53,6 +53,18 @@ class FeedEntry {
         root.appendChild(bottom);
 
         return root;
+    }
+
+    mark_seen() {
+        fetch("/seen", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                url: this.link
+            }),
+        });
     }
 }
 
