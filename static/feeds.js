@@ -64,11 +64,24 @@ class Feed {
     constructor(entries, feeds) {
         this.entries = entries.map(entry => new FeedEntry(entry));
         this.entriesRoot = document.getElementById("entries");
+        this.leftBar = document.getElementById("leftbar");
+
         this.feeds = new Map(feeds.map(a => [a[1], a[0]]));
+
+        for (let [feed_url, feed_name] of this.feeds) {
+            this.render_feed(feed_url, feed_name);
+        }
 
         for (let entry of this.entries) {
             this.render_entry(entry);
         }
+    }
+
+    render_feed(feed_url, feed_name) {
+        let row = document.createElement("div");
+        row.setAttribute("class", "feed");
+        row.innerHTML = feed_name;
+        this.leftBar.appendChild(row);
     }
 
     render_entry(entry) {
