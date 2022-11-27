@@ -29,15 +29,15 @@ class FeedDb:
 
     def get_entries(
         self,
-        feeds: List[str],
-        only_unseen: bool=False) -> list[FeedEntry]:
+        feeds_url: List[str],
+        only_unseen: bool=True) -> list[FeedEntry]:
         query = """SELECT *
                    FROM entries
                    WHERE feed in ({feeds})""".format(
-            feeds=','.join(['?']*len(feeds))) + \
+            feeds=','.join(['?']*len(feeds_url))) + \
             "AND seen = 0;" if only_unseen else ";"
 
-        raw = self.conn.execute(query).fetchall()
+        raw = self.conn.execute(query, feeds_url).fetchall()
         return [FeedEntry.from_sql(i) for i in raw]
 
     def save_entry(self, entry: FeedEntry):
