@@ -1,9 +1,15 @@
 "use strict";
+/**
+ * This module is included in /feeds.html, and handles the dynamic scripting of that page.
+ */
 
+ // Main function of the feeds.html view.
 function feeds_main(entries, feeds) {
     let feed = new Feed(entries, feeds);
 }
 
+/** Represents a single item in the RSS feed.
+ */
 class FeedEntry {
     constructor(json) {
         this.title = json.title;
@@ -13,6 +19,9 @@ class FeedEntry {
         this.feed = json.feed;
     }
 
+    /** Produces an Element representing the entry.
+     * @param {Array[string]} parent_feed: The object representing the RSS feed that entry is part of.
+    */
     toElement(parent_feed) {
         let root = document.createElement("div");
         root.setAttribute("class", "entry");
@@ -55,6 +64,8 @@ class FeedEntry {
         return root;
     }
 
+    /** Marks the entry as seen.
+     */
     mark_seen() {
         fetch("/seen", {
             method: "POST",
@@ -68,11 +79,25 @@ class FeedEntry {
     }
 }
 
+/** Represents the entire feed view.
+ */
 class Feed {
+    /** Every items of every feed. */
     entries = new Array();
+
+    /** Every feed. */
     feeds = new Map();
+
+    /** The root Element, of which every feed displayed entry is a child. */
     entriesRoot = undefined;
 
+    /** The leftBar container element */
+    leftBar = undefined;
+
+    /**
+     * @param {string} entries: JSON string representing a FeedEntry.
+     * @param {Array[string]} feeds
+     */
     constructor(entries, feeds) {
         this.entries = entries.map(entry => new FeedEntry(entry));
         this.entriesRoot = document.getElementById("entries");
@@ -89,6 +114,7 @@ class Feed {
         }
     }
 
+    /** Renders a Feed in the left bar. */
     render_feed(feed_url, feed_name) {
         let row = document.createElement("div");
         row.setAttribute("class", "feed");
@@ -96,6 +122,7 @@ class Feed {
         this.leftBar.appendChild(row);
     }
 
+    /** Renders an entry. */
     render_entry(entry) {
         const parent_feed = this.feeds.has(entry.feed) ?
             this.feeds.get(entry.feed) : entry.feed;
