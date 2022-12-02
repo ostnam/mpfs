@@ -2,6 +2,7 @@ import os
 
 import flask
 import flask_login
+import waitress
 
 import login
 import datamanager
@@ -66,4 +67,7 @@ def seen():
     return ""
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    if "MPFS_PRODUCTION" in os.environ:
+        waitress.serve(app, host="0.0.0.0", port=8080)
+    else:
+        app.run(port=8080, debug=True)
