@@ -12,8 +12,16 @@
     {% endblock %}
 
 <style type="text/css">
+    body {
+        background-color: #f8f8f8;
+    }
+
     * {
         font-size: 20px;
+    }
+
+    .no_hover {
+        pointer-events: none;
     }
 
     div#main {
@@ -22,6 +30,7 @@
         flex-direction: row;
         flex: 1;
         min-height: 0;
+        background-color: #f8f8f8;
     }
 
     div#leftbar {
@@ -34,13 +43,12 @@
     }
 
     div#entries {
-        background-color: #FFFFFF;
         flex-direction: column;
         width: 1200px;
+        background-color: #f8f8f8;
     }
 
     div.entry {
-        border: 2px solid #fff;
         max-width: 1000px;
         padding: 10px 20px 10px 20px;
         margin-bottom: 10px;
@@ -57,13 +65,26 @@
     }
 
     div.feed {
-        border: 2px solid #fff;
         padding: 10px 20px 10px 20px;
         margin-bottom: 1px;
         margin-right: 2px;
         overflow: hidden;
         outline: none;
-        background-color: #ffffff;
+    }
+    #options_container {
+        height: 30px;
+        display: flex;
+        flex-flow: row;
+        margin: 8px;
+    }
+    .option_button {
+        margin: 4px;
+        height: 100%;
+    }
+    .option_img {
+        height: 100%;
+        width: 100%;
+        user-select: none;
     }
 </style>
 
@@ -74,6 +95,20 @@
 <body>
     <div id="main">
         <div id="leftbar">
+            <div id="options_container">
+                <div class="option_button">
+                    <img class="option_img" src="static/images/refresh.png">
+                </div>
+                <div class="option_button">
+                    <img class="option_img" src="static/images/add_feed.png">
+                </div>
+                <div class="option_button">
+                    <img class="option_img" src="static/images/remove_feed.png">
+                </div>
+                <div class="option_button">
+                    <img class="option_img" src="static/images/settings.png">
+                </div>
+            </div>
         </div>
 
         <div id="entries">
