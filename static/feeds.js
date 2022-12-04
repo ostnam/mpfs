@@ -6,6 +6,12 @@
  // Main function of the feeds.html view.
 function feeds_main(entries, feeds) {
     let feed = new Feed(entries, feeds);
+    build_options(feed);
+}
+
+function build_options(feed) {
+    let add_feed_button = document.getElementById("add_feed_button");
+    add_feed_button.onclick = () => feed.add_feed_popup();
 }
 
 /** Represents a single item in the RSS feed.
@@ -106,7 +112,7 @@ class Feed {
         this.feeds = new Map(feeds.map(a => [a[1], a[0]]));
 
         for (let [feed_url, feed_name] of this.feeds) {
-            this.render_feed(feed_url, feed_name);
+            this.render_feed(feed_name, feed_url);
         }
 
         for (let entry of this.entries) {
@@ -115,7 +121,7 @@ class Feed {
     }
 
     /** Renders a Feed in the left bar. */
-    render_feed(feed_url, feed_name) {
+    render_feed(feed_name, feed_url) {
         let row = document.createElement("div");
         row.setAttribute("class", "feed");
         row.innerHTML = feed_name;
@@ -128,4 +134,98 @@ class Feed {
             this.feeds.get(entry.feed) : entry.feed;
         this.entriesRoot.appendChild(entry.toElement(parent_feed));
     }
+
+    /** Draws the popup window that appears when clicking on the button to add a feed. */
+    add_feed_popup() {
+        let root = document.createElement("div");
+        root.setAttribute("class", "modal");
+        root.setAttribute("id", "feed_popup");
+        root.style.display = "block";
+
+        let content = document.createElement("div");
+        content.setAttribute("class", "modal-content");
+        root.appendChild(content);
+
+        let top_bar = document.createElement("div");
+        top_bar.setAttribute("class", "add_feed_top_bar");
+        content.appendChild(top_bar);
+
+        let title = document.createElement("div");
+        title.innerHTML = "Add a feed";
+        title.setAttribute("id", "add_feed_title")
+        top_bar.appendChild(title);
+
+        let close_btn = document.createElement("div");
+        close_btn.setAttribute("onclick", "close_feed_popup()");
+        close_btn.setAttribute("class", "option_button");
+        top_bar.appendChild(close_btn);
+
+        let close_img = document.createElement("img");
+        close_img.setAttribute("class", "option_img");
+        close_img.setAttribute("src", "static/images/close.png");
+        close_btn.appendChild(close_img)
+
+        let main = document.createElement("div");
+        content.appendChild(main);
+
+        let form = document.createElement("form");
+        form.onsubmit = (event) => {
+            event.preventDefault();
+            this.add_feed(event);
+        };
+        main.appendChild(form);
+
+        let feed_name_label = document.createElement("label");
+        feed_name_label.setAttribute("for", "feed_name_input");
+        feed_name_label.innerHTML = "Feed name";
+        let feed_name_input = document.createElement("input");
+        feed_name_input.setAttribute("name", "feed_name_input");
+        feed_name_input.setAttribute("id", "feed_name_input");
+        let feed_url_label = document.createElement("label");
+        feed_url_label.setAttribute("for", "feed_url_input");
+        feed_url_label.innerHTML = "Feed URL";
+        let feed_url_input = document.createElement("input");
+        feed_url_input.setAttribute("name", "feed_url_input");
+        feed_url_input.setAttribute("id", "feed_url_input");
+        let feed_submit = document.createElement("input");
+        feed_submit.setAttribute("type", "submit");
+        feed_submit.setAttribute("id", "feed_submit");
+        feed_submit.setAttribute("value", "Submit");
+        let br1 = document.createElement("br");
+        let br2 = document.createElement("br");
+
+        form.appendChild(feed_name_label);
+        form.appendChild(feed_name_input);
+        form.appendChild(br1);
+        form.appendChild(feed_url_label);
+        form.appendChild(feed_url_input);
+        form.appendChild(br2);
+        form.appendChild(feed_submit);
+
+        document.body.appendChild(root);
+    }
+
+    /** Adds a feed, after filling the form and submitting it. */
+    add_feed(event) {
+        document.getElementById('feed_submit').disabled = true;
+        const url = document.getElementById("feed_url_input").value;
+        const name = document.getElementById("feed_name_input").value;
+
+        fetch("/subscriptions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                name: name,
+                url: url})
+        });
+
+        this.feeds.set(name, url);
+        this.render_feed(name, url);
+    }
+}
+
+function close_feed_popup() {
+    document.getElementById("feed_popup").remove();
 }
