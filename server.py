@@ -6,6 +6,7 @@ import waitress
 
 import login
 import datamanager
+from feed import *
 
 app = flask.Flask(__name__)
 data_manager = datamanager.DataManager()
@@ -64,6 +65,17 @@ def logout():
 def seen():
     json = flask.request.get_json()
     data_manager.mark_seen(json["url"])
+    return ""
+
+@app.route("/subscriptions", methods=["POST"])
+@flask_login.login_required
+def add_subscription():
+    json = flask.request.get_json()
+    feed = Feed(
+            url=json["url"],
+            name=json["name"],
+    )
+    data_manager.add_feed(feed)
     return ""
 
 if __name__ == "__main__":

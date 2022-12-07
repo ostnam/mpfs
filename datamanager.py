@@ -11,6 +11,9 @@ class DataManager:
     def get_subscribed_feeds(self) -> List[Feed]:
         return self.db.get_feeds()
 
+    def add_feed(self, feed: Feed) -> None:
+        self.db.add_feed(feed)
+
     def get_entries(self,
                     feeds: List[Feed],
                     force_update: bool) -> list[FeedEntry]:
