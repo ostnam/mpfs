@@ -62,26 +62,18 @@ class FeedEntry:
 class Feed(NamedTuple):
     name: str
     url: str
-    last_update: Optional[datetime.datetime]
 
     @staticmethod
-    def from_sql(t: Tuple[str, str, str]) -> Feed:
-        if not t[2]:
-            last_update = None
-        else:
-            last_update = datetime.datetime.fromisoformat(t[2])
-
+    def from_sql(t: Tuple[str, str]) -> Feed:
         return Feed(
             name=t[0],
             url=t[1],
-            last_update=last_update
         )
 
-    def to_sql(self) -> Tuple[str, str, str]:
+    def to_sql(self) -> Tuple[str, str]:
         return (
             self.name,
             self.url,
-            self.last_update.isoformat() if self.last_update else ""
         )
 
 def refresh_feed(feed: str) -> list[FeedEntry]:

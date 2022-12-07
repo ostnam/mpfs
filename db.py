@@ -22,8 +22,7 @@ class FeedDb:
         self.conn.execute("""
             CREATE TABLE IF NOT EXISTS feeds (
                 name text NOT NULL,
-                url text NOT NULL,
-                last_update text
+                url text NOT NULL
             );
         """)
 
@@ -58,10 +57,10 @@ class FeedDb:
         raw = self.conn.execute("SELECT * FROM feeds;")
         return [Feed.from_sql(i) for i in raw]
 
-    def save_feed(self, feed: Feed):
+    def add_feed(self, feed: Feed):
         self.conn.execute("""
             INSERT INTO feeds
-            VALUES (?, ?, ?);
+            VALUES (?, ?);
             """, feed.to_sql())
         self.conn.commit()
 
