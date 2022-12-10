@@ -15,14 +15,15 @@ class FeedDb:
                 link text,
                 published text,
                 seen int,
-                feed text
+                feed text,
+                CONSTRAINT uniqs UNIQUE (title, link, feed)
             );
         """)
 
         self.conn.execute("""
             CREATE TABLE IF NOT EXISTS feeds (
                 name text NOT NULL,
-                url text NOT NULL
+                url text PRIMARY KEY
             );
         """)
 
@@ -48,7 +49,7 @@ class FeedDb:
 
     def save_entries(self, entries: List[FeedEntry]):
         self.conn.executemany("""
-            INSERT INTO entries
+            INSERT OR IGNORE entries
             VALUES (?, ?, ?, ?, ?);
             """, [e.to_sql() for e in entries])
         self.conn.commit()
@@ -70,3 +71,4 @@ class FeedDb:
             SET seen = 1
             WHERE link = ?;
             """, (link,))
+        self.conn.commit()

@@ -47,7 +47,7 @@ def login_page():
 @flask_login.login_required
 def feeds():
     feeds = data_manager.get_subscribed_feeds()
-    entries = data_manager.get_entries(feeds, True)
+    entries = data_manager.get_entries(feeds, False)
     return flask.render_template(
         "feeds.html",
         entries=entries,
