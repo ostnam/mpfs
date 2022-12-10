@@ -44,6 +44,12 @@ class FeedEntry {
 
         let a = document.createElement("a");
         a.setAttribute("href", this.link);
+        a.onclick = () => {
+            this.mark_seen();
+        };
+        a.onauxclick = () => {
+            this.mark_seen();
+        };
 
         let title = document.createElement("b");
         title.innerHTML = this.title;
@@ -51,7 +57,10 @@ class FeedEntry {
         let td2 = document.createElement("td");
         td2.setAttribute("class", "del_cross");
         td2.innerHTML = "🞫";
-        td2.onclick = () => this.mark_seen();
+        td2.onclick = () => {
+            this.mark_seen();
+            this.delete_element();
+        };
 
         let bottom = document.createElement("div");
         bottom.setAttribute("class", "entry_bottom");
@@ -67,6 +76,7 @@ class FeedEntry {
         tr.appendChild(td2);
         root.appendChild(bottom);
 
+        this.root = root;
         return root;
     }
 
@@ -82,6 +92,12 @@ class FeedEntry {
                 url: this.link
             }),
         });
+    }
+
+    /** Remove the HTML element from the DOM.
+     */
+    delete_element() {
+        this.root.remove();
     }
 }
 
