@@ -14,6 +14,26 @@ function build_options(feed) {
     add_feed_button.onclick = () => feed.add_feed_popup();
 }
 
+function close_feed_popup() {
+    document.getElementById("feed_popup").remove();
+}
+
+class SubscribedFeed {
+    constructor(name, url) {
+        this.name = name;
+        this.url = url;
+    }
+
+    /** Renders a Feed in the left bar. */
+    render_in_leftbar(left_bar_node) {
+        let row = document.createElement("div");
+        row.setAttribute("class", "feed");
+        row.innerHTML = this.name;
+        left_bar_node.appendChild(row);
+        this.node = row;
+    }
+}
+
 /** Represents a single item in the RSS feed.
  */
 class FeedEntry {
@@ -128,10 +148,12 @@ class Feed {
         this.entriesRoot = document.getElementById("entries");
         this.leftBar = document.getElementById("leftbar");
 
-        this.feeds = new Map(feeds.map(a => [a[1], a[0]]));
+        this.feeds = new Map(feeds.map(
+            a => [a[1], new SubscribedFeed(a[0], a[1])]
+        ));
 
-        for (let [feed_url, feed_name] of this.feeds) {
-            this.render_feed(feed_name, feed_url);
+        for (let [_, feed] of this.feeds) {
+            feed.render_in_leftbar(this.leftBar);
         }
 
         for (let entry of this.entries) {
@@ -139,18 +161,10 @@ class Feed {
         }
     }
 
-    /** Renders a Feed in the left bar. */
-    render_feed(feed_name, feed_url) {
-        let row = document.createElement("div");
-        row.setAttribute("class", "feed");
-        row.innerHTML = feed_name;
-        this.leftBar.appendChild(row);
-    }
-
     /** Renders an entry. */
     render_entry(entry) {
         const parent_feed = this.feeds.has(entry.feed) ?
-            this.feeds.get(entry.feed) : entry.feed;
+            this.feeds.get(entry.feed).name : entry.feed;
         this.entriesRoot.appendChild(entry.toElement(parent_feed));
     }
 
@@ -240,11 +254,8 @@ class Feed {
                 url: url})
         });
 
-        this.feeds.set(name, url);
-        this.render_feed(name, url);
+        let new_feed = new SubscribedFeed(name, url);
+        this.feeds.push(new_feed);
+        new_feed.render_in_leftbar();
     }
-}
-
-function close_feed_popup() {
-    document.getElementById("feed_popup").remove();
 }
