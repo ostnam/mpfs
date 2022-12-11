@@ -1,11 +1,15 @@
 import sqlite3
+import os
 from typing import List
 
 from feed import FeedEntry, Feed
 
 class FeedDb:
     def __init__(self):
-        self.conn = sqlite3.connect("feeds.db", check_same_thread=False)
+        if "MPFS_PRODUCTION" in os.environ:
+            self.conn = sqlite3.connect("/data/feeds.db", check_same_thread=False)
+        else:
+            self.conn = sqlite3.connect("./feeds.db", check_same_thread=False)
         self.init_db()
 
     def init_db(self):
