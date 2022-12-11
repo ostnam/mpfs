@@ -69,6 +69,13 @@ class FeedDb:
             """, feed.to_sql())
         self.conn.commit()
 
+    def delete_feed(self, feed: Feed):
+        self.conn.execute("""
+            DELETE FROM feeds
+            WHERE name = ? and url = ?;
+        """, feed.to_sql())
+        self.conn.commit()
+
     def mark_seen(self, link: str):
         self.conn.execute("""
             UPDATE entries

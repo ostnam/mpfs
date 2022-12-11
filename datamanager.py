@@ -14,6 +14,9 @@ class DataManager:
     def add_feed(self, feed: Feed) -> None:
         self.db.add_feed(feed)
 
+    def delete_feed(self, feed: Feed) -> None:
+        self.db.delete_feed(feed);
+
     def get_entries(self,
                     feeds: List[Feed],
                     force_update: bool) -> list[FeedEntry]:

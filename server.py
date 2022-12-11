@@ -67,7 +67,7 @@ def seen():
     data_manager.mark_seen(json["url"])
     return ""
 
-@app.route("/subscriptions", methods=["POST"])
+@app.post("/subscriptions")
 @flask_login.login_required
 def add_subscription():
     json = flask.request.get_json()
@@ -76,6 +76,17 @@ def add_subscription():
             name=json["name"],
     )
     data_manager.add_feed(feed)
+    return ""
+
+@app.delete("/subscriptions")
+@flask_login.login_required
+def drop_subscription():
+    json = flask.request.get_json()
+    feed = Feed(
+            url=json["url"],
+            name=json["name"],
+    )
+    data_manager.delete_feed(feed)
     return ""
 
 if __name__ == "__main__":

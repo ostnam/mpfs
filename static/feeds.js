@@ -24,13 +24,39 @@ class SubscribedFeed {
         this.url = url;
     }
 
-    /** Renders a Feed in the left bar. */
+    /** Renders a SubscribedFeed in the left bar. */
     render_in_leftbar(left_bar_node) {
         let row = document.createElement("div");
         row.setAttribute("class", "feed");
         row.innerHTML = this.name;
         left_bar_node.appendChild(row);
         this.node = row;
+    }
+
+    /** Removes the SubscribedFeed from the left bar.
+    */
+    destroy() {
+        this.node.remove();
+    }
+
+    /** Called after clicking on the delete_feed button.
+     *  Alters the HTML element in consequence.
+     */
+    make_deletable(delete_fn) {
+        this.node.classList.add("deletable_feed");
+        this.node.onclick = () => {
+            this.destroy();
+            delete_fn(this.name, this.url);
+        };
+    }
+
+    /** Called after clicking on the delete_feed button,
+     *  while already in delete_feed mode.
+     *  Returns the HTML element to normal.
+     */
+    unmake_deletable() {
+        this.node.classList.remove("deletable_feed");
+        this.node.removeAttribute("onclick");
     }
 }
 
@@ -148,6 +174,10 @@ class Feed {
         this.entriesRoot = document.getElementById("entries");
         this.leftBar = document.getElementById("leftbar");
 
+        let delete_feed_btn = document.getElementById("delete_feed_btn");
+        this.leftBar.onclick = () => this.toggle_delete_feed();
+        this.delete_feed_ison = false;
+
         this.feeds = new Map(feeds.map(
             a => [a[1], new SubscribedFeed(a[0], a[1])]
         ));
@@ -160,6 +190,37 @@ class Feed {
             this.render_entry(entry);
         }
     }
+
+    /** Called after clicking on the delete_feed button.
+     */
+    toggle_delete_feed() {
+        if (this.delete_feed_ison) {
+            for (let [_, feed] of this.feeds) {
+                feed.unmake_deletable();
+            };
+            this.delete_feed_ison = false;
+        } else {
+            for (let [_, feed] of this.feeds) {
+                feed.make_deletable((a, b) => this.drop_feed(a, b));
+            };
+            this.delete_feed_ison = true;
+        }
+    };
+
+    /** Remove a feed from the feeds list.
+     */
+    drop_feed(feed_name, url) {
+        this.feeds.delete(url);
+        fetch("/subscriptions", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                name: feed_name,
+                url: url})
+        });
+    };
 
     /** Renders an entry. */
     render_entry(entry) {
