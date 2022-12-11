@@ -45,10 +45,10 @@ class FeedEntry {
         let a = document.createElement("a");
         a.setAttribute("href", this.link);
         a.onclick = () => {
-            this.mark_seen();
+            this.mark_seen(true);
         };
         a.onauxclick = () => {
-            this.mark_seen();
+            this.mark_seen(true);
         };
 
         let title = document.createElement("b");
@@ -82,7 +82,10 @@ class FeedEntry {
 
     /** Marks the entry as seen.
      */
-    mark_seen() {
+    mark_seen(change_css) {
+        if (change_css) {
+            this.root.classList.add("seen_entry");
+        }
         fetch("/seen", {
             method: "POST",
             headers: {
