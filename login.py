@@ -3,6 +3,9 @@ from dataclasses import dataclass
 
 @dataclass
 class User:
+    """
+    Handles authentification.
+    """
     is_authenticated: bool
     is_active: bool
     is_anonymous: bool
