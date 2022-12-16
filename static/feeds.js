@@ -25,11 +25,21 @@ class SubscribedFeed {
     }
 
     /** Renders a SubscribedFeed in the left bar. */
-    render_in_leftbar(left_bar_node) {
+    render_in_leftbar(left_bar_node, num_elements) {
         let row = document.createElement("div");
         row.setAttribute("class", "feed");
-        row.innerHTML = this.name;
+
+        let feed_name = document.createElement("div");
+        feed_name.setAttribute("class", "feed_name");
+        feed_name.innerHTML = this.name;
+
+        let counter = document.createElement("div");
+        counter.setAttribute("class", "feed_counter");
+        counter.innerHTML = num_elements != 0 ? num_elements.toString() : "";
+
         left_bar_node.appendChild(row);
+        row.appendChild(counter);
+        row.appendChild(feed_name);
         this.node = row;
     }
 
@@ -193,7 +203,7 @@ class FeedPage {
 
 
         for (let [_, feed] of this.feeds) {
-            feed.render_in_leftbar(this.leftBar);
+            feed.render_in_leftbar(this.leftBar, this.entries.get(feed.url).length);
         }
 
         this.render_entries();
