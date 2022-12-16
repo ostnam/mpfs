@@ -5,7 +5,7 @@
 
  // Main function of the feeds.html view.
 function feeds_main(entries, feeds) {
-    let feed = new Feed(entries, feeds);
+    let feed = new FeedPage(entries, feeds);
     build_options(feed);
 }
 
@@ -152,9 +152,11 @@ class FeedEntry {
 
 /** Represents the entire feed view.
  */
-class Feed {
-    /** Every items of every feed. */
-    entries = new Array();
+class FeedPage {
+    /** Every items of every feed.
+     * keys: feed url, values: FeedEntry
+     */
+    entries = new Map();
 
     /** Every feed. */
     feeds = new Map();
@@ -170,7 +172,18 @@ class Feed {
      * @param {Array[string]} feeds
      */
     constructor(entries, feeds) {
-        this.entries = entries.map(entry => new FeedEntry(entry));
+        this.feeds = new Map(feeds.map(
+            a => [a[1], new SubscribedFeed(a[0], a[1])]
+        ));
+
+        for (let [_, feed] of this.feeds) {
+            this.entries.set(feed.url, new Array());
+        }
+
+        for (let entry of entries.map(entry => new FeedEntry(entry))) {
+            this.entries.get(entry.feed).push(entry);
+        }
+
         this.entriesRoot = document.getElementById("entries");
         this.leftBar = document.getElementById("leftbar");
 
@@ -178,16 +191,25 @@ class Feed {
         this.leftBar.onclick = () => this.toggle_delete_feed();
         this.delete_feed_ison = false;
 
-        this.feeds = new Map(feeds.map(
-            a => [a[1], new SubscribedFeed(a[0], a[1])]
-        ));
 
         for (let [_, feed] of this.feeds) {
             feed.render_in_leftbar(this.leftBar);
         }
 
-        for (let entry of this.entries) {
-            this.render_entry(entry);
+        this.render_entries();
+    }
+
+    /** Renders every entries.
+     */
+    render_entries() {
+        if (this.current_selected_feed === undefined) {
+            let all_entries = new Array();
+            for (let [_, entries] of this.entries) {
+                all_entries = all_entries.concat(entries);
+            }
+            all_entries.sort((a, b) => a.published - b.published);
+            let new_html_elements = all_entries.map(x => this.render_entry(x));
+            document.getElementById("entries").replaceChildren(...new_html_elements);
         }
     }
 
@@ -226,7 +248,7 @@ class Feed {
     render_entry(entry) {
         const parent_feed = this.feeds.has(entry.feed) ?
             this.feeds.get(entry.feed).name : entry.feed;
-        this.entriesRoot.appendChild(entry.toElement(parent_feed));
+        return entry.toElement(parent_feed);
     }
 
     /** Draws the popup window that appears when clicking on the button to add a feed. */
