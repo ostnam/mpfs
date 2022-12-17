@@ -12,6 +12,9 @@ function feeds_main(entries, feeds) {
 function build_options(feed) {
     let add_feed_button = document.getElementById("add_feed_button");
     add_feed_button.onclick = () => feed.add_feed_popup();
+
+    let delete_feed_btn = document.getElementById("delete_feed_button");
+    delete_feed_btn.onclick = () => this.toggle_delete_feed();
 }
 
 function close_feed_popup() {
@@ -197,8 +200,6 @@ class FeedPage {
         this.entriesRoot = document.getElementById("entries");
         this.leftBar = document.getElementById("leftbar");
 
-        let delete_feed_btn = document.getElementById("delete_feed_btn");
-        this.leftBar.onclick = () => this.toggle_delete_feed();
         this.delete_feed_ison = false;
 
 
