@@ -14,11 +14,18 @@ function build_options(feed) {
     add_feed_button.onclick = () => feed.add_feed_popup();
 
     let delete_feed_btn = document.getElementById("delete_feed_button");
-    delete_feed_btn.onclick = () => this.toggle_delete_feed();
+    delete_feed_btn.onclick = () => feed.toggle_delete_feed();
+
+    let settings_btn = document.getElementById("settings_button");
+    settings_btn.onclick = () => feed.settings_popup();
 }
 
 function close_feed_popup() {
     document.getElementById("feed_popup").remove();
+}
+
+function close_settings_popup() {
+    document.getElementById("settings_popup").remove();
 }
 
 class SubscribedFeed {
@@ -38,7 +45,7 @@ class SubscribedFeed {
 
         let counter = document.createElement("div");
         counter.setAttribute("class", "feed_counter");
-        counter.innerHTML = num_elements != 0 ? num_elements.toString() : "";
+        counter.innerHTML = num_elements !== 0 ? num_elements.toString() : "";
 
         left_bar_node.appendChild(row);
         row.appendChild(counter);
@@ -70,6 +77,24 @@ class SubscribedFeed {
     unmake_deletable() {
         this.node.classList.remove("deletable_feed");
         this.node.removeAttribute("onclick");
+    }
+
+    fetch_entries() {
+        return fetch("/subscriptions", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: feed.name,
+                    url: feed.url
+        })}).then(
+            res => res.json()
+        ).then(
+            JSON.parse(json)
+        ).then(
+            e => e.map(x => new FeedEntry(x))
+        );
     }
 }
 
@@ -277,7 +302,7 @@ class FeedPage {
         top_bar.setAttribute("class", "add_feed_top_bar");
         content.appendChild(top_bar);
 
-        let title = document.createElement("div");
+        let title = document.createElement("b");
         title.innerHTML = "Add a feed";
         title.setAttribute("id", "add_feed_title")
         top_bar.appendChild(title);
@@ -332,24 +357,97 @@ class FeedPage {
         document.body.appendChild(root);
     }
 
+    /** Draws the popup window that appears when clicking on the settings button. */
+    settings_popup() {
+        let root = document.createElement("div");
+        root.setAttribute("class", "modal");
+        root.setAttribute("id", "settings_popup");
+        root.style.display = "block";
+
+        let content = document.createElement("div");
+        content.setAttribute("class", "modal-content");
+        root.appendChild(content);
+
+        let top_bar = document.createElement("div");
+        top_bar.setAttribute("class", "settings_top_bar");
+        content.appendChild(top_bar);
+
+        let title = document.createElement("b");
+        title.innerHTML = "Settings";
+        title.setAttribute("id", "settings_title")
+        top_bar.appendChild(title);
+
+        let close_btn = document.createElement("div");
+        close_btn.setAttribute("onclick", "close_settings_popup()");
+        close_btn.setAttribute("class", "option_button");
+        top_bar.appendChild(close_btn);
+
+        let close_img = document.createElement("img");
+        close_img.setAttribute("class", "option_img");
+        close_img.setAttribute("src", "static/images/close.png");
+        close_btn.appendChild(close_img)
+
+        let input_json_container = document.createElement("div");
+        input_json_container.setAttribute("class", "settings_row");
+        content.appendChild(input_json_container);
+
+        let input_json_feeds = document.createElement("input");
+        input_json_feeds.type = "file";
+        input_json_feeds.style.display = "none";
+        input_json_container.appendChild(input_json_feeds);
+        input_json_feeds.onchange = e => {
+            let file = e.target.files[0];
+            let reader = new FileReader();
+            reader.readAsText(file, "utf-8");
+            reader.onload = readerEvent => {
+                let content = readerEvent.target.result;
+                let parsed = JSON.parse(content).map(
+                    x => new SubscribedFeed(x.name, x.url)
+                );
+                parsed.forEach((feed) => this.register_feed(feed));
+            }
+        };
+
+        let input_json_text = document.createElement("button");
+        input_json_text.innerHTML = "Load feeds from JSON.";
+        input_json_text.onclick = () => input_json_feeds.click();
+        input_json_container.appendChild(input_json_text);
+
+        document.body.appendChild(root);
+    }
+
     /** Adds a feed, after filling the form and submitting it. */
     add_feed(event) {
         document.getElementById('feed_submit').disabled = true;
         const url = document.getElementById("feed_url_input").value;
         const name = document.getElementById("feed_name_input").value;
+        let new_feed = new SubscribedFeed(name, url);
+        this.register_feed(new_feed, true);
+    }
 
+    register_feed(feed, get_entries) {
+        for (let prev_feed of this.feeds) {
+            if (prev_feed.url === feed.url) {
+                return;
+            }
+        }
         fetch("/subscriptions", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                name: name,
-                url: url})
+                name: feed.name,
+                url: feed.url})
         });
-
-        let new_feed = new SubscribedFeed(name, url);
-        this.feeds.push(new_feed);
-        new_feed.render_in_leftbar();
+        this.feeds.set(feed.url, feed);
+        if (get_entries) {
+            let entries = feed.fetch_entries();
+            this.entries.set(feed.url, entries);
+        }
+        feed.render_in_leftbar(
+            this.leftBar,
+            this.entries.get(feed.url).length
+        );
     }
 }

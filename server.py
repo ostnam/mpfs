@@ -91,6 +91,11 @@ def drop_subscription():
     data_manager.delete_feed(feed)
     return ""
 
+@app.get("/subscriptions")
+@flask_login.login_required
+def get_subscription():
+    return data_manager.get_subscribed_feeds()
+
 @app.get("/entries")
 @flask_login.login_required
 def entries():
