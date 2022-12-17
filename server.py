@@ -1,4 +1,5 @@
 import os
+import json
 
 import flask
 import flask_login
@@ -26,6 +27,7 @@ def static_include(filename):
     fullpath = os.path.join("./static", filename)
     with open(fullpath, 'r') as f:
         return f.read()
+
 
 @app.route("/")
 def index():
@@ -88,6 +90,17 @@ def drop_subscription():
     )
     data_manager.delete_feed(feed)
     return ""
+
+@app.get("/entries")
+@flask_login.login_required
+def entries():
+    request_json = flask.request.get_json()
+    feed = Feed(
+            url=request_json["url"],
+            name=request_json["name"],
+    )
+    data = data_manager.get_entries([feed], True)
+    return json.dumps(data)
 
 if __name__ == "__main__":
     if "MPFS_PRODUCTION" in os.environ:
