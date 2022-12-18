@@ -13,3 +13,15 @@ registerFeed feed =
     , body = jsonBody (feedDataEncoder feed)
     , expect = expectWhatever None
     }
+
+unSubscribeFeed : FeedData -> Cmd ApiMessage
+unSubscribeFeed feed =
+  request
+    { url  = "/subscriptions"
+    , method = "DELETE"
+    , headers = []
+    , body = jsonBody (feedDataEncoder feed)
+    , expect = expectWhatever None
+    , timeout = Nothing
+    , tracker = Nothing
+    }

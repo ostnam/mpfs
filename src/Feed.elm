@@ -20,22 +20,30 @@ type alias Feed =
     }
 
 
-type Popup
+type FeedSelected
+  = All
+  | Single String
+
+
+type PopupState
   = None
   | AddFeedPopup
   | SettingsPopup
 
+
 type alias Model =
     { feeds : List Feed
-    , popup : Popup
+    , popup : PopupState
     , addFeedName : String
     , addFeedUrl : String
+    , deleteFeedMode : Bool
+    , selectedFeed : FeedSelected
     }
 
 
 default_model : Model
 default_model =
-    Model [] None "" ""
+    Model [] None "" "" False All
 
 
 type Msg
@@ -43,7 +51,8 @@ type Msg
     | EditedAddFeedName String
     | EditedAddFeedUrl String
     | SubmitAddFeed
-    | DeleteFeed
+    | SelectFeed FeedSelected
+    | DeleteFeed FeedData
     | NewEntries (List Entry)
     | AddFeedButtonPressed
     | DeleteFeedButtonPressed
@@ -75,6 +84,7 @@ subscriptions _ =
 ------------------------------------------------------------
 ---------------------- View functions ----------------------
 ------------------------------------------------------------
+-- Top-level function that renders the entire document.
 view : Model -> Document Msg
 view model =
   let 
@@ -89,7 +99,7 @@ view model =
     SettingsPopup -> Document "MPFS" [ mainBody ]
     AddFeedPopup  -> Document "MPFS" [ mainBody, u (renderAddFeedPopup model) ]
 
-
+-- Renders the main body: everything outside of popups.
 view_body : Model -> Html.Styled.Html Msg
 view_body model =
     div
@@ -105,13 +115,14 @@ view_body model =
             , Css.backgroundColor (Css.rgb 248 248 248)
             ]
         ]
-        [ render_left_bar model.feeds
+        [ render_left_bar model
         , render_entries model
         ]
 
 
-render_left_bar : List Feed -> Html Msg
-render_left_bar feeds =
+-- Renders the left bar.
+render_left_bar : Model -> Html Msg
+render_left_bar model =
   div
     [ id "leftbar" 
     , css 
@@ -124,22 +135,69 @@ render_left_bar feeds =
       ]
     ]
     ([ render_options,
-      renderTotal feeds
-     ] ++ List.map renderFeedInLeftBar feeds)
+      renderTotal model.feeds
+     ] ++ List.map (renderFeedInLeftBar model.deleteFeedMode) model.feeds)
 
 
+-- Renders the 'total' row on top of the feed list.
 renderTotal : List Feed -> Html Msg
 renderTotal l =
   let totCount = List.map .entries l
               |> List.map List.length
               |> List.foldl (+) 0
   in 
-    div [] [text (String.fromInt totCount ++ " entries")]
+    b [css [Css.margin4 (Css.px 0) (Css.px 0) (Css.px 0) (Css.px 10)]]
+      [text (String.fromInt totCount ++ " entries")]
 
 
-renderFeedInLeftBar : Feed -> Html Msg
-renderFeedInLeftBar feed = 
-  div [] [text feed.data.name]
+-- Produces the Html element for a single feed, to be inserted in the left bar.
+renderFeedInLeftBar : Bool -> Feed ->  Html Msg
+renderFeedInLeftBar deleteModeOn feed = 
+  let 
+      nameColor = 
+        if deleteModeOn
+        then Css.color (Css.rgb 255 0 0)
+        else Css.color (Css.rgb 0 0 0)
+      titleOnClick = onClick 
+        (if deleteModeOn
+        then DeleteFeed feed.data
+        else SelectFeed (Single feed.data.url))
+  in
+  div 
+    [css
+      [ Css.padding4 (Css.px 0) (Css.px 20) (Css.px 0) (Css.px 20)
+      , Css.margin4 (Css.px 0) (Css.px 2) (Css.px 1) (Css.px 0)
+      , Css.overflow Css.hidden
+      , Css.displayFlex
+      , Css.flexDirection Css.row
+      ]
+    ]
+    [ div
+        [ css
+          [ Css.minHeight Css.fitContent
+          , Css.maxHeight Css.fitContent
+          , Css.minWidth Css.fitContent
+          , Css.maxWidth Css.fitContent
+          , Css.margin4 (Css.px 0) (Css.px 10) (Css.px 0) (Css.px 0)
+          ]
+        ]
+        [
+          text (String.fromInt (List.length feed.entries))
+        ]
+      , div
+        [ css
+          [ Css.minHeight Css.fitContent
+          , Css.maxHeight Css.fitContent
+          , Css.minWidth Css.fitContent
+          , Css.maxWidth Css.fitContent
+          , nameColor
+          ]
+        , titleOnClick
+        ]
+        [
+          text feed.data.name
+        ]
+    ]
 
 
 option_button_style : List Css.Style
@@ -179,7 +237,11 @@ render_options =
           ] 
           [ img [ src "static/images/add_feed.png", css option_img_style ] [] 
           ]
-        , div [ css option_button_style ] [ img [ src "static/images/remove_feed.png", css option_img_style ] [] ]
+        , div 
+          [ css option_button_style 
+          , onClick DeleteFeedButtonPressed
+          ]
+          [ img [ src "static/images/remove_feed.png", css option_img_style ] [] ]
         , div [ css option_button_style ] [ img [ src "static/images/settings.png", css option_img_style ] [] ]
         ]
 
@@ -312,7 +374,23 @@ update msg model =
         Ok l  -> ({ model | feeds = List.map (\f -> Feed f []) l}, Cmd.none)
         Err _ -> (model, Cmd.none)
 
-    _ -> ( model, Cmd.none )
+    DeleteFeedButtonPressed ->
+      ({ model | deleteFeedMode = not model.deleteFeedMode}, Cmd.none)
+
+    SelectFeed s ->
+      ({ model | selectedFeed = s }, Cmd.none)
+
+    DeleteFeed feed -> 
+      ({ model | feeds = 
+          List.filter (\f -> f.data /= feed) model.feeds}
+      , Cmd.map ApiMessage (unSubscribeFeed feed))
+
+    AddFeed _ _           -> (model, Cmd.none)
+    NewEntries _          -> (model, Cmd.none)
+    SettingsButtonPressed -> (model, Cmd.none)
+    RefreshButtonPressed  -> (model, Cmd.none)
+    ApiMessage _          -> (model, Cmd.none)
+
 
 
 submitAddFeed : Model -> (Model, Cmd Msg)
@@ -327,6 +405,7 @@ submitAddFeed model =
                , addFeedUrl  = ""
       }, Cmd.map ApiMessage (registerFeed newFeed))
     else ( model, Cmd.none )
+
 
 ------------------------------------------------------------
 --------------------------- Init ---------------------------
