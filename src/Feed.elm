@@ -8,21 +8,41 @@ import Html.Styled.Attributes exposing (..)
 import Html.Styled.Events exposing (..)
 import Http
 import Types exposing (..)
+import Api exposing (..)
 
 
+------------------------------------------------------------
+---------------------- Defining types ----------------------
+------------------------------------------------------------
 type alias Feed =
     { data : FeedData
     , entries : List Entry
     }
 
 
+type Popup
+  = None
+  | AddFeedPopup
+  | SettingsPopup
+
 type alias Model =
     { feeds : List Feed
+    , popup : Popup
+    , addFeedName : String
+    , addFeedUrl : String
     }
+
+
+default_model : Model
+default_model =
+    Model [] None "" ""
 
 
 type Msg
     = AddFeed String String
+    | EditedAddFeedName String
+    | EditedAddFeedUrl String
+    | SubmitAddFeed
     | DeleteFeed
     | NewEntries (List Entry)
     | AddFeedButtonPressed
@@ -30,8 +50,13 @@ type Msg
     | SettingsButtonPressed
     | RefreshButtonPressed
     | ReceivedSubscribedFeeds (Result Http.Error (List FeedData))
+    | ClosePopupPressed
+    | ApiMessage ApiMessage
 
 
+------------------------------------------------------------
+---------------------- Main function -----------------------
+------------------------------------------------------------
 main : Program () Model Msg
 main =
     Browser.document
@@ -42,19 +67,27 @@ main =
         }
 
 
-default_model : Model
-default_model =
-    Model []
-
-
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
 
 
+------------------------------------------------------------
+---------------------- View functions ----------------------
+------------------------------------------------------------
 view : Model -> Document Msg
-view msg =
-    Document "MPFS" [ Html.Styled.toUnstyled (view_body msg) ]
+view model =
+  let 
+      u = 
+        Html.Styled.toUnstyled
+
+      mainBody = 
+        u (view_body model)
+  in 
+  case model.popup of
+    None          -> Document "MPFS" [ mainBody ]
+    SettingsPopup -> Document "MPFS" [ mainBody ]
+    AddFeedPopup  -> Document "MPFS" [ mainBody, u (renderAddFeedPopup model) ]
 
 
 view_body : Model -> Html.Styled.Html Msg
@@ -72,7 +105,7 @@ view_body model =
 
 
 render_left_bar : List Feed -> Html Msg
-render_left_bar l =
+render_left_bar _ =
     div [ id "leftbar" ]
         [ render_options
         ]
@@ -105,25 +138,163 @@ render_options =
         ]
         [ div
             [ css option_button_style
-            , onClick AddFeedButtonPressed
             ]
-            [ img [ src "static/images/refresh.png", css option_img_style ] [] ]
-        , div [ css option_button_style ] [ img [ src "static/images/add_feed.png", css option_img_style ] [] ]
+            [ img [
+              src "static/images/refresh.png", css option_img_style ] [] ]
+        , div
+          [
+          css option_button_style 
+          , onClick AddFeedButtonPressed
+          ] 
+          [ img [ src "static/images/add_feed.png", css option_img_style ] [] 
+          ]
         , div [ css option_button_style ] [ img [ src "static/images/remove_feed.png", css option_img_style ] [] ]
         , div [ css option_button_style ] [ img [ src "static/images/settings.png", css option_img_style ] [] ]
         ]
 
 
+addFeedPopupRootStyle : List Css.Style
+addFeedPopupRootStyle =
+  [ Css.display Css.block
+  , Css.position Css.fixed
+  , Css.zIndex (Css.int 1)
+  , Css.left (Css.px 0)
+  , Css.top (Css.px 0)
+  , Css.width (Css.pct 100)
+  , Css.height (Css.pct 100)
+  , Css.overflow (Css.auto)
+  , Css.backgroundColor (Css.rgba 0 0 0 0.4)
+  , Css.fontFamily Css.sansSerif
+  , Css.fontSize (Css.px 20)
+  ]
+
+
+addFeedPopupContentStyle : List Css.Style 
+addFeedPopupContentStyle =
+  [ Css.backgroundColor (Css.rgb 254 254 254)
+  , Css.margin2 (Css.pct 15) (Css.auto)
+  , Css.padding (Css.px 20)
+  , Css.border3 (Css.px 1) Css.solid (Css.rgb 136 136 136)
+  , Css.width (Css.pct 80)
+  , Css.maxWidth (Css.px 800)
+  ]
+
+
+popupTopBar : String -> Html Msg
+popupTopBar title =
+  div 
+    [ css 
+      [ Css.height (Css.px 30)
+      , Css.displayFlex
+      , Css.flexFlow1 Css.row
+      , Css.margin4 (Css.px 0) (Css.px 0) (Css.px 20) (Css.px 0) 
+      ]
+    ]
+    [ b 
+      [ css
+        [ Css.textAlign Css.center
+        , Css.flex Css.auto
+        , Css.fontSize (Css.px 25)
+        ]
+      ]
+      [text title]
+    , div
+      [ onClick ClosePopupPressed
+      , css option_button_style
+      ]
+      [ img
+        [ css option_img_style
+        , src "static/images/close.png"
+        ] []
+      ]
+    ]
+
+
+addFeedName : String -> Html Msg
+addFeedName s =
+  input 
+    [ type_ "text"
+    , placeholder "Feed name"
+    , value s
+    , onInput EditedAddFeedName
+    ] []
+
+
+addFeedUrl : String ->  Html Msg
+addFeedUrl s =
+  input 
+    [ type_ "text"
+    , placeholder "Feed url"
+    , value s
+    , onInput EditedAddFeedUrl
+    ] []
+
+addFeedSubmitButton : Html Msg
+addFeedSubmitButton = 
+  button
+    [ onClick SubmitAddFeed
+    ]
+    [ text "Submit"
+    ]
+
+renderAddFeedPopup : Model -> Html Msg
+renderAddFeedPopup model =
+  div [css addFeedPopupRootStyle]
+    [
+      div [css addFeedPopupContentStyle]
+        [ popupTopBar "Add feed"
+        , addFeedName model.addFeedName
+        , br [] []
+        , addFeedUrl model.addFeedUrl
+        , br [] []
+        , addFeedSubmitButton
+        ]
+    ]
+
+
 render_entries : Model -> Html Msg
-render_entries x =
+render_entries _ =
     div [] [ text "yo" ]
 
-
-update : Msg -> Model -> ( Model, Cmd msg )
+------------------------------------------------------------
+-------------------- Updating the model --------------------
+------------------------------------------------------------
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+  case msg of
+    AddFeedButtonPressed ->
+      ({ model | popup = AddFeedPopup }, Cmd.none)
+
+    ClosePopupPressed ->
+      ({ model | popup = None }, Cmd.none)
+
+    EditedAddFeedName s ->
+      ({ model | addFeedName = s}, Cmd.none)
+
+    EditedAddFeedUrl s ->
+      ({ model | addFeedUrl = s}, Cmd.none)
+
+    SubmitAddFeed -> submitAddFeed model
+
+    _ -> ( model, Cmd.none )
 
 
+submitAddFeed : Model -> (Model, Cmd Msg)
+submitAddFeed model =
+  let newFeed = FeedData model.addFeedUrl model.addFeedName
+      oldList = List.map .data model.feeds
+  in 
+    if not (List.member newFeed oldList)
+    then 
+      ({ model | feeds = (Feed newFeed []) :: model.feeds
+               , addFeedName = ""
+               , addFeedUrl  = ""
+      }, Cmd.map ApiMessage (registerFeed newFeed))
+    else ( model, Cmd.none )
+
+------------------------------------------------------------
+--------------------------- Init ---------------------------
+------------------------------------------------------------
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( default_model
