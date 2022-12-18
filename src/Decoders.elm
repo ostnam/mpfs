@@ -9,5 +9,5 @@ feedDataListDecoder = Json.Decode.list feedDataDecoder
 
 feedDataDecoder : Decoder FeedData
 feedDataDecoder = Json.Decode.map2 FeedData
-  (Json.Decode.field "name" Json.Decode.string)
   (Json.Decode.field "url" Json.Decode.string)
+  (Json.Decode.field "name" Json.Decode.string)
