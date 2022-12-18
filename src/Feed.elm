@@ -97,6 +97,12 @@ view_body model =
         , css
             [ Css.fontFamily Css.sansSerif
             , Css.fontSize (Css.px 20)
+            , Css.width (Css.pct 100)
+            , Css.displayFlex
+            , Css.flexDirection Css.row
+            , Css.flex (Css.int 1)
+            , Css.minHeight (Css.px 0)
+            , Css.backgroundColor (Css.rgb 248 248 248)
             ]
         ]
         [ render_left_bar model.feeds
@@ -105,10 +111,35 @@ view_body model =
 
 
 render_left_bar : List Feed -> Html Msg
-render_left_bar _ =
-    div [ id "leftbar" ]
-        [ render_options
-        ]
+render_left_bar feeds =
+  div
+    [ id "leftbar" 
+    , css 
+      [ Css.maxWidth (Css.px 400)
+      , Css.minWidth (Css.px 170)
+      , Css.width (Css.px 270)
+      , Css.displayFlex
+      , Css.flexDirection (Css.column)
+      , Css.backgroundColor (Css.rgb 248 248 248)
+      ]
+    ]
+    ([ render_options,
+      renderTotal feeds
+     ] ++ List.map renderFeedInLeftBar feeds)
+
+
+renderTotal : List Feed -> Html Msg
+renderTotal l =
+  let totCount = List.map .entries l
+              |> List.map List.length
+              |> List.foldl (+) 0
+  in 
+    div [] [text (String.fromInt totCount ++ " entries")]
+
+
+renderFeedInLeftBar : Feed -> Html Msg
+renderFeedInLeftBar feed = 
+  div [] [text feed.data.name]
 
 
 option_button_style : List Css.Style
@@ -275,6 +306,11 @@ update msg model =
       ({ model | addFeedUrl = s}, Cmd.none)
 
     SubmitAddFeed -> submitAddFeed model
+
+    ReceivedSubscribedFeeds r ->
+      case r of
+        Ok l  -> ({ model | feeds = List.map (\f -> Feed f []) l}, Cmd.none)
+        Err _ -> (model, Cmd.none)
 
     _ -> ( model, Cmd.none )
 

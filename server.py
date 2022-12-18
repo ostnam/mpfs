@@ -94,7 +94,7 @@ def drop_subscription():
 @app.get("/subscriptions")
 @flask_login.login_required
 def get_subscription():
-    return data_manager.get_subscribed_feeds()
+    return [{"name": feed.name, "url": feed.url} for feed in data_manager.get_subscribed_feeds()]
 
 @app.get("/entries")
 @flask_login.login_required
