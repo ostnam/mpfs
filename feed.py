@@ -67,6 +67,15 @@ class FeedEntry:
                 int(self.seen),
                 self.feed)
 
+    def to_json_dict(self) -> Dict[str, str]:
+        return {
+            "title": self.title,
+            "link": self.link,
+            "published": self.published.isoformat(),
+            "seen": self.seen,
+            "feed": self.feed
+        }
+
 class Feed(NamedTuple):
     name: str
     url: str

@@ -1,8 +1,9 @@
 module Feed exposing (..)
 
+import Time
+import Json.Decode
 import Browser exposing (Document)
 import Css
-import Decoders exposing (..)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (..)
 import Html.Styled.Events exposing (..)
@@ -14,6 +15,11 @@ import Api exposing (..)
 ------------------------------------------------------------
 ---------------------- Defining types ----------------------
 ------------------------------------------------------------
+type alias Entry =
+  { data : EntryData
+  , seen : Bool
+  }
+
 type alias Feed =
     { data : FeedData
     , entries : List Entry
@@ -47,8 +53,7 @@ default_model =
 
 
 type Msg
-    = AddFeed String String
-    | EditedAddFeedName String
+    = EditedAddFeedName String
     | EditedAddFeedUrl String
     | SubmitAddFeed
     | SelectFeed FeedSelected
@@ -61,6 +66,8 @@ type Msg
     | ReceivedSubscribedFeeds (Result Http.Error (List FeedData))
     | ClosePopupPressed
     | ApiMessage ApiMessage
+    | SeenEntry EntryData FeedData
+    | DeleteEntryButtonPressed EntryData FeedData
 
 
 ------------------------------------------------------------
@@ -158,10 +165,11 @@ renderFeedInLeftBar deleteModeOn feed =
         if deleteModeOn
         then Css.color (Css.rgb 255 0 0)
         else Css.color (Css.rgb 0 0 0)
-      titleOnClick = onClick 
-        (if deleteModeOn
+
+      titleOnClick = onClick  <|
+        if deleteModeOn
         then DeleteFeed feed.data
-        else SelectFeed (Single feed.data.url))
+        else SelectFeed (Single feed.data.url)
   in
   div 
     [css
@@ -346,8 +354,125 @@ renderAddFeedPopup model =
 
 
 render_entries : Model -> Html Msg
-render_entries _ =
-    div [] [ text "yo" ]
+render_entries model =
+  let
+    unpackEntries : Feed -> List { feed : FeedData, entry : Entry }
+    unpackEntries f = List.map (\e -> { feed = f.data, entry = e} ) f.entries
+
+    displayedEntries = case model.selectedFeed of
+      All -> model.feeds
+        |> List.map unpackEntries
+        |> List.concat
+        |> List.sortBy (\e -> e.entry.data.published |> Time.posixToMillis)
+        |> List.reverse
+      Single s -> model.feeds
+        |> List.filter (\f -> f.data.url == s)
+        |> List.map unpackEntries
+        |> List.concat
+        |> List.sortBy (\e -> e.entry.data.published |> Time.posixToMillis)
+        |> List.reverse
+  in
+  div
+    [ css
+      [ Css.displayFlex
+      , Css.flexDirection Css.column
+      , Css.backgroundColor <| Css.rgb 248 248 248
+      , Css.width <| Css.px 1200
+      ]
+    ]
+    <| List.map (\x -> renderEntry x.entry x.feed) displayedEntries
+
+
+renderEntry : Entry -> FeedData -> Html Msg
+renderEntry entry f =
+  let
+      bgColor = Css.backgroundColor <|
+        if entry.seen
+        then Css.rgb 217 216 216
+        else Css.rgb 242 240 240
+  in
+  div
+    [ css
+      [ Css.maxWidth (Css.px 1000)
+      , Css.padding4 (Css.px 0) (Css.px 2) (Css.px 0) (Css.px 6)
+      , Css.margin4  (Css.px 0) (Css.px 2) (Css.px 6) (Css.px 0)
+      , Css.overflow Css.hidden
+      , Css.outline Css.none
+      , bgColor
+      ]
+    ]
+    [ table
+      [ css
+        [ Css.border (Css.px 0)
+        , Css.width  (Css.pct 100)
+        , Css.margin4  (Css.px -6) (Css.px 0) (Css.px -6) (Css.px 0)
+        , Css.tableLayout Css.fixed
+        ]
+      ]
+      [ tbody
+          []
+          [
+            tr
+            []
+            [
+            td 
+              [] 
+              [a 
+                [ href entry.data.link
+                , onClick (SeenEntry entry.data f)
+                , on "auxclick" <| Json.Decode.succeed <| SeenEntry entry.data f
+                ]
+                [b [] [text entry.data.title]
+                ]
+              ]
+            , td
+              [ css
+                [ Css.width (Css.px 50)
+                , Css.fontSize (Css.px 30)
+                , Css.textAlign (Css.right)
+                ]
+              , onClick <| DeleteEntryButtonPressed entry.data f
+              ] [text "🞫"]
+            ]
+          ]
+      ]
+    , div [] [text <| f.name ++ (displayTime entry.data.published)]
+    ]
+
+displayTime : Time.Posix -> String
+displayTime t =
+  let
+    tz = Time.utc
+
+    day = case Time.toWeekday tz t of
+      Time.Mon -> "Mon"
+      Time.Tue -> "Tue"
+      Time.Wed -> "Wed"
+      Time.Thu -> "Thu"
+      Time.Fri -> "Fri"
+      Time.Sat -> "Sat"
+      Time.Sun -> "Sun"
+
+    month = case Time.toMonth tz t of
+      Time.Jan -> "Jan"
+      Time.Feb -> "Feb"
+      Time.Mar -> "Mar"
+      Time.Apr -> "Apr"
+      Time.May -> "May"
+      Time.Jun -> "Jun"
+      Time.Jul -> "Jul"
+      Time.Aug -> "Aug"
+      Time.Sep -> "Sep"
+      Time.Oct -> "Oct"
+      Time.Nov -> "Nov"
+      Time.Dec -> "Dec"
+
+    year = Time.toYear tz t |> String.fromInt
+    h = Time.toHour tz t |> String.fromInt
+    m = Time.toMinute tz t |> String.fromInt
+    s = Time.toSecond tz t |> String.fromInt
+  in
+  day ++ " " ++ month ++ " " ++ year ++ " " ++ h ++ ":" ++ m ++ ":" ++ s
 
 ------------------------------------------------------------
 -------------------- Updating the model --------------------
@@ -371,7 +496,10 @@ update msg model =
 
     ReceivedSubscribedFeeds r ->
       case r of
-        Ok l  -> ({ model | feeds = List.map (\f -> Feed f []) l}, Cmd.none)
+        Ok l  -> 
+          let newFeeds = List.map (\f -> Feed f []) l
+          in
+              ({ model | feeds = newFeeds }, Cmd.map ApiMessage <| refreshFeeds <| List.map .data newFeeds)
         Err _ -> (model, Cmd.none)
 
     DeleteFeedButtonPressed ->
@@ -385,12 +513,31 @@ update msg model =
           List.filter (\f -> f.data /= feed) model.feeds}
       , Cmd.map ApiMessage (unSubscribeFeed feed))
 
-    AddFeed _ _           -> (model, Cmd.none)
+    SeenEntry entryData parent ->
+      ({model | feeds = List.map (\f -> if f.data == parent
+        then {f | entries = 
+          List.map (\e -> if e.data == entryData
+          then {e | seen = True }
+          else e) f.entries
+        }
+        else f) model.feeds
+      }, Cmd.map ApiMessage (updateSeen entryData))
+
+    DeleteEntryButtonPressed entryData parent -> 
+      ({ model | feeds = List.map (\f -> if not (f.data == parent)
+      then f
+      else { f | entries = List.filter (\e -> e.data /= entryData) f.entries }
+      ) model.feeds }, Cmd.map ApiMessage (updateSeen entryData))
+
+    ApiMessage m ->
+      case m of
+        Entries (Ok entries) -> ({model | feeds = updateEntries entries model.feeds}, Cmd.none)
+        Entries (Err _)      -> (model, Cmd.none)
+        NoVal _              -> (model, Cmd.none)
+
     NewEntries _          -> (model, Cmd.none)
     SettingsButtonPressed -> (model, Cmd.none)
     RefreshButtonPressed  -> (model, Cmd.none)
-    ApiMessage _          -> (model, Cmd.none)
-
 
 
 submitAddFeed : Model -> (Model, Cmd Msg)
@@ -406,6 +553,15 @@ submitAddFeed model =
       }, Cmd.map ApiMessage (registerFeed newFeed))
     else ( model, Cmd.none )
 
+
+updateEntries : List EntryData -> List Feed -> List Feed
+updateEntries entries feeds =
+  let sameFeed feed entryData = entryData.feed == feed.data.url
+      updateFn entries2 feed =
+        { feed | entries = List.filter (sameFeed feed) entries2
+          |> List.map (\e -> Entry e False)}
+  in
+  List.map (updateFn entries) feeds
 
 ------------------------------------------------------------
 --------------------------- Init ---------------------------

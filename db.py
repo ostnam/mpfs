@@ -68,7 +68,7 @@ class FeedDb:
         Write multiple entries in the database.
         """
         self.conn.executemany("""
-            INSERT OR IGNORE entries
+            INSERT OR IGNORE INTO entries
             VALUES (?, ?, ?, ?, ?);
             """, [e.to_sql() for e in entries])
         self.conn.commit()

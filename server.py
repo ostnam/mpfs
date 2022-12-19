@@ -1,5 +1,6 @@
 import os
 import json
+import dataclasses
 
 import flask
 import flask_login
@@ -96,16 +97,14 @@ def drop_subscription():
 def get_subscription():
     return [{"name": feed.name, "url": feed.url} for feed in data_manager.get_subscribed_feeds()]
 
-@app.get("/entries")
+@app.post("/entries_batch")
 @flask_login.login_required
-def entries():
+def entries_batch():
     request_json = flask.request.get_json()
-    feed = Feed(
-            url=request_json["url"],
-            name=request_json["name"],
-    )
-    data = data_manager.get_entries([feed], True)
-    return json.dumps(data)
+    print(request_json)
+    feeds = [Feed(name=f["name"], url=f["url"]) for f in request_json]
+    data = data_manager.get_entries(feeds, True)
+    return json.dumps([d.to_json_dict() for d in data])
 
 if __name__ == "__main__":
     if "MPFS_PRODUCTION" in os.environ:

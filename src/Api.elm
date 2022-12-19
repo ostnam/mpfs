@@ -1,17 +1,20 @@
 module Api exposing (..)
 
+import Json.Encode
+import Json.Decode
 import Http exposing (..)
 import Types exposing (..)
 
-type ApiMessage =
-  None (Result Http.Error ())
+type ApiMessage 
+  = Entries (Result (Http.Error) (List EntryData))
+  | NoVal (Result Http.Error ())
 
 registerFeed : FeedData -> Cmd ApiMessage
 registerFeed feed =
   post 
     { url  = "/subscriptions"
     , body = jsonBody (feedDataEncoder feed)
-    , expect = expectWhatever None
+    , expect = expectWhatever NoVal
     }
 
 unSubscribeFeed : FeedData -> Cmd ApiMessage
@@ -21,7 +24,23 @@ unSubscribeFeed feed =
     , method = "DELETE"
     , headers = []
     , body = jsonBody (feedDataEncoder feed)
-    , expect = expectWhatever None
+    , expect = expectWhatever NoVal
     , timeout = Nothing
     , tracker = Nothing
     }
+
+updateSeen : EntryData -> Cmd ApiMessage
+updateSeen entry =
+  post
+    { url = "/seen"
+    , body =  jsonBody (entryDataEncoder entry)
+    , expect = expectWhatever NoVal
+    }
+
+refreshFeeds : List FeedData -> Cmd ApiMessage
+refreshFeeds feeds =
+  post
+  { url = "/entries_batch"
+  , body = jsonBody (Json.Encode.list feedDataEncoder feeds)
+  , expect = expectJson Entries (Json.Decode.list entryDataDecoder)
+  }
