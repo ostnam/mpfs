@@ -81,6 +81,14 @@ def add_subscription():
     data_manager.add_feed(feed)
     return ""
 
+@app.post("/subscriptions_batch")
+@flask_login.login_required
+def add_subscription_batch():
+    request_json = flask.request.get_json()
+    feeds = [Feed(name=f["name"], url=f["url"]) for f in request_json]
+    [data_manager.add_feed(feed) for feed in feeds]
+    return ""
+
 @app.delete("/subscriptions")
 @flask_login.login_required
 def drop_subscription():
@@ -101,7 +109,6 @@ def get_subscription():
 @flask_login.login_required
 def entries_batch():
     request_json = flask.request.get_json()
-    print(request_json)
     feeds = [Feed(name=f["name"], url=f["url"]) for f in request_json]
     data = data_manager.get_entries(feeds, True)
     return json.dumps([d.to_json_dict() for d in data])

@@ -68,6 +68,7 @@ type Msg
     | ApiMessage ApiMessage
     | SeenEntry EntryData FeedData
     | DeleteEntryButtonPressed EntryData FeedData
+    | SubscriptionsJsonClicked
 
 
 ------------------------------------------------------------
@@ -103,7 +104,7 @@ view model =
   in 
   case model.popup of
     None          -> Document "MPFS" [ mainBody ]
-    SettingsPopup -> Document "MPFS" [ mainBody ]
+    SettingsPopup -> Document "MPFS" [ mainBody, u (renderSettingsPopup model) ]
     AddFeedPopup  -> Document "MPFS" [ mainBody, u (renderAddFeedPopup model) ]
 
 -- Renders the main body: everything outside of popups.
@@ -240,17 +241,21 @@ render_options =
               src "static/images/refresh.png", css option_img_style ] [] ]
         , div
           [
-          css option_button_style 
+          css option_button_style
           , onClick AddFeedButtonPressed
-          ] 
+          ]
           [ img [ src "static/images/add_feed.png", css option_img_style ] [] 
           ]
-        , div 
-          [ css option_button_style 
+        , div
+          [ css option_button_style
           , onClick DeleteFeedButtonPressed
           ]
           [ img [ src "static/images/remove_feed.png", css option_img_style ] [] ]
-        , div [ css option_button_style ] [ img [ src "static/images/settings.png", css option_img_style ] [] ]
+        , div
+          [ css option_button_style
+          , onClick SettingsButtonPressed
+          ]
+          [ img [ src "static/images/settings.png", css option_img_style ] [] ]
         ]
 
 
@@ -352,6 +357,19 @@ renderAddFeedPopup model =
         ]
     ]
 
+renderSettingsPopup : Model -> Html Msg
+renderSettingsPopup _ =
+  div [css addFeedPopupRootStyle]
+    [div [css addFeedPopupContentStyle]
+      [ popupTopBar "Settings"
+      , button
+        [ onClick SubscriptionsJsonClicked
+        ]
+        [
+          text "Load subscriptions from JSON."
+        ]
+      ]
+    ]
 
 render_entries : Model -> Html Msg
 render_entries model =
@@ -467,10 +485,11 @@ displayTime t =
       Time.Nov -> "Nov"
       Time.Dec -> "Dec"
 
-    year = Time.toYear tz t |> String.fromInt
-    h = Time.toHour tz t |> String.fromInt
-    m = Time.toMinute tz t |> String.fromInt
-    s = Time.toSecond tz t |> String.fromInt
+    pad str = if String.length str < 2 then "0" ++ str else str
+    year = Time.toYear tz t |> String.fromInt |> pad
+    h = Time.toHour tz t    |> String.fromInt |> pad
+    m = Time.toMinute tz t  |> String.fromInt |> pad
+    s = Time.toSecond tz t  |> String.fromInt |> pad
   in
   day ++ " " ++ month ++ " " ++ year ++ " " ++ h ++ ":" ++ m ++ ":" ++ s
 
@@ -535,9 +554,23 @@ update msg model =
         Entries (Err _)      -> (model, Cmd.none)
         NoVal _              -> (model, Cmd.none)
 
+    SettingsButtonPressed -> 
+      ({ model | popup = SettingsPopup }, Cmd.none)
+
+    SubscriptionsJsonClicked ->
+      (model, Cmd.none)
+
     NewEntries _          -> (model, Cmd.none)
-    SettingsButtonPressed -> (model, Cmd.none)
     RefreshButtonPressed  -> (model, Cmd.none)
+
+
+addFeeds : List Feed -> List FeedData -> List Feed
+addFeeds old new =
+  let oldDatas = List.map .data old
+      toAdd = List.filter (\e -> not <| List.member e oldDatas) new
+      asFeeds = List.map (\d -> Feed d []) toAdd
+  in
+  asFeeds ++ old
 
 
 submitAddFeed : Model -> (Model, Cmd Msg)

@@ -17,6 +17,14 @@ registerFeed feed =
     , expect = expectWhatever NoVal
     }
 
+registerFeeds : List FeedData -> Cmd ApiMessage
+registerFeeds feeds =
+  post
+    { url  = "/subscriptions_batch"
+    , body = jsonBody <| Json.Encode.list feedDataEncoder <| feeds
+    , expect = expectWhatever NoVal
+    }
+
 unSubscribeFeed : FeedData -> Cmd ApiMessage
 unSubscribeFeed feed =
   request
