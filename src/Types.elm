@@ -41,7 +41,8 @@ feedDataEncoder feed =
 entryDataEncoder : EntryData -> Encode.Value
 entryDataEncoder entry =
   Encode.object
-    [ ("url", Encode.string entry.title) ]
+    [ ("url", Encode.string entry.link)
+    ]
 
 entryDataDecoder : Decoder EntryData
 entryDataDecoder = 

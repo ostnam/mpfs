@@ -33,7 +33,7 @@ updateSeen : EntryData -> Cmd ApiMessage
 updateSeen entry =
   post
     { url = "/seen"
-    , body =  jsonBody (entryDataEncoder entry)
+    , body = jsonBody (entryDataEncoder entry)
     , expect = expectWhatever NoVal
     }
 
