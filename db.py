@@ -39,11 +39,12 @@ class FeedDb:
         """)
 
     def get_entries(self,
-                    feeds_url: List[Feed],
+                    feeds: List[Feed],
                     only_unseen: bool=True) -> list[FeedEntry]:
         """
         Gets all the entries of the passed-in feeds.
         """
+        feeds_url = [f.url for f in feeds]
         query = """SELECT *
                    FROM entries
                    WHERE feed in ({feeds})""".format(

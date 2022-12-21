@@ -1,5 +1,7 @@
 from typing import List
 import threading
+import concurrent.futures
+import time
 
 import db
 from feed import Feed, FeedEntry, refresh_feed
@@ -10,6 +12,20 @@ class DataManager:
     """
     def __init__(self):
         self.db = db.FeedDb()
+        threading.Thread(group=None, target=self.update_loop).start()
+
+    def update_loop(self):
+        while True:
+            self.update_feeds()
+            time.sleep(600)
+
+    def update_feeds(self):
+        all_feeds = self.get_subscribed_feeds()
+        with concurrent.futures.ThreadPoolExecutor() as p:
+            new_entries = [p.submit(refresh_feed, f.url) for f in all_feeds]
+            new_entries = [p.result() for p in new_entries]
+            threading.Thread(target=self.db.save_entries,
+                             args=[sum(new_entries, [])]).start()
 
     def get_subscribed_feeds(self) -> List[Feed]:
         """
@@ -27,27 +43,15 @@ class DataManager:
         """
         Unsubscribe to a feed.
         """
-        self.db.delete_feed(feed);
+        self.db.delete_feed(feed)
 
     def get_entries(self,
-                    feeds: List[Feed],
-                    force_update: bool) -> list[FeedEntry]:
+                    feeds: List[Feed]) -> list[FeedEntry]:
         """
         Gets all the entries from the requested feeds.
         """
-        if force_update:
-            nested_entries = [refresh_feed(feed.url) for feed in feeds]
-            fresh_entries = [entry for entry_list in nested_entries
-                             for entry in entry_list]
-            db_update_thr = threading.Thread(target=self.db.save_entries,
-                                             args=[fresh_entries])
-            db_update_thr.run()
-            entries = [e for e in fresh_entries if not e.seen]
-
-        else:
-            feeds_urls = [f.url for f in feeds]
-            entries = self.db.get_entries(feeds_urls, True)
-
+        entries = self.db.get_entries(feeds, True)
+        threading.Thread(target=self.update_feeds).start()
         return entries
 
     def mark_seen(self, url: str) -> None:

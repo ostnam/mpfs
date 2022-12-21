@@ -50,7 +50,7 @@ def login_page():
 @flask_login.login_required
 def feeds():
     feeds = data_manager.get_subscribed_feeds()
-    entries = data_manager.get_entries(feeds, False)
+    entries = data_manager.get_entries(feeds)
     return flask.render_template(
         "feeds.html",
         entries=entries,
@@ -110,7 +110,7 @@ def get_subscription():
 def entries_batch():
     request_json = flask.request.get_json()
     feeds = [Feed(name=f["name"], url=f["url"]) for f in request_json]
-    data = data_manager.get_entries(feeds, True)
+    data = data_manager.get_entries(feeds)
     return json.dumps([d.to_json_dict() for d in data])
 
 if __name__ == "__main__":
