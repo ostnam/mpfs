@@ -420,40 +420,42 @@ renderEntry entry f =
       , bgColor
       ]
     ]
-    [ table
+    [ div
       [ css
         [ Css.border (Css.px 0)
         , Css.width  (Css.pct 100)
-        , Css.margin4  (Css.px -6) (Css.px 0) (Css.px -6) (Css.px 0)
-        , Css.tableLayout Css.fixed
+        , Css.borderRadius (Css.px 2)
         ]
       ]
-      [ tbody
-          []
-          [
-            tr
-            []
-            [
-            td 
-              [] 
-              [a 
-                [ href entry.data.link
-                , onClick (SeenEntry entry.data f)
-                , on "auxclick" <| Json.Decode.succeed <| SeenEntry entry.data f
-                ]
-                [b [] [text entry.data.title]
-                ]
-              ]
-            , td
-              [ css
-                [ Css.width (Css.px 50)
-                , Css.fontSize (Css.px 30)
-                , Css.textAlign (Css.right)
-                ]
-              , onClick <| DeleteEntryButtonPressed entry.data f
-              ] [text "🞫"]
+      [ div
+        [ css
+          [ Css.displayFlex
+          , Css.flexDirection Css.row
+          ]
+        ]
+        [a
+          [ href entry.data.link
+          , onClick (SeenEntry entry.data f)
+          , on "auxclick" <| Json.Decode.succeed <| SeenEntry entry.data f
+          , css
+            [ Css.margin4 (Css.px 0) (Css.auto) (Css.px 0) (Css.px 0)
             ]
           ]
+          [b [] [text entry.data.title]
+          ]
+        , div
+          [ css
+            [ Css.height (Css.px 25)
+            , Css.fontSize (Css.px 30)
+            , Css.textAlign (Css.right)
+            , Css.displayFlex
+            , Css.margin (Css.px 0)
+            ]
+          , onClick <| DeleteEntryButtonPressed entry.data f
+          ]
+          [ text "🞫"
+          ]
+        ]
       ]
     , div [] [text <| f.name ++ ", " ++ (displayTime entry.data.published)]
     ]
