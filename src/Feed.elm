@@ -236,6 +236,7 @@ render_options =
         ]
         [ div
             [ css option_button_style
+            , onClick RefreshButtonPressed
             ]
             [ img [
               src "static/images/refresh.png", css option_img_style ] [] ]
@@ -560,8 +561,13 @@ update msg model =
     SubscriptionsJsonClicked ->
       (model, Cmd.none)
 
+    RefreshButtonPressed  ->
+      (model,
+        List.map .data model.feeds
+        |> refreshFeeds
+        |> Cmd.map ApiMessage)
+
     NewEntries _          -> (model, Cmd.none)
-    RefreshButtonPressed  -> (model, Cmd.none)
 
 
 addFeeds : List Feed -> List FeedData -> List Feed
