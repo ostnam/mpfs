@@ -455,7 +455,7 @@ renderEntry entry f =
             ]
           ]
       ]
-    , div [] [text <| f.name ++ (displayTime entry.data.published)]
+    , div [] [text <| f.name ++ ", " ++ (displayTime entry.data.published)]
     ]
 
 displayTime : Time.Posix -> String
