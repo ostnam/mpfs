@@ -154,7 +154,11 @@ renderTotal l =
               |> List.map List.length
               |> List.foldl (+) 0
   in 
-    b [css [Css.margin4 (Css.px 0) (Css.px 0) (Css.px 0) (Css.px 10)]]
+  b [ css
+      [ Css.margin4 (Css.px 0) (Css.px 0) (Css.px 0) (Css.px 10)
+      ]
+    , onClick <| SelectFeed All
+    ]
       [text (String.fromInt totCount ++ " entries")]
 
 
