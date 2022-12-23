@@ -454,6 +454,7 @@ renderEntry entry f =
             , Css.textAlign (Css.right)
             , Css.displayFlex
             , Css.margin (Css.px 0)
+            , Css.property "user-select" "none"
             ]
           , onClick <| DeleteEntryButtonPressed entry.data f
           ]
