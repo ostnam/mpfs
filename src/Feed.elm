@@ -433,9 +433,23 @@ renderEntries model =
             , Css.width <| Css.px 1200
             ]
         ]
-    <|
-        List.map (\x -> renderEntry x.entry x.feed) displayedEntries
+    <| case displayedEntries of
+        [] -> [renderNoEntryMsg]
+        ls -> List.map (\x -> renderEntry x.entry x.feed) ls
 
+
+renderNoEntryMsg : Html Msg
+renderNoEntryMsg =
+    div
+        [ css
+            [ Css.maxWidth (Css.px 1000)
+            , Css.textAlign Css.center
+            , Css.padding (Css.px 50)
+            , Css.fontStyle (Css.italic)
+            ]
+        ]
+        [ text "No entry available in current feed"
+        ]
 
 renderEntry : Entry -> FeedData -> Html Msg
 renderEntry entry f =
