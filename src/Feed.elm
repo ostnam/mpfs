@@ -126,11 +126,11 @@ viewBody model =
             [ Css.fontFamily Css.sansSerif
             , Css.fontSize (Css.px 20)
             , Css.width (Css.pct 100)
+            , Css.minHeight (Css.vh 100)
+            , Css.backgroundColor (Css.rgb 248 248 248)
             , Css.displayFlex
             , Css.flexDirection Css.row
             , Css.flex (Css.int 1)
-            , Css.minHeight (Css.px 0)
-            , Css.backgroundColor (Css.rgb 248 248 248)
             ]
         ]
         [ renderLeftBar model
@@ -150,7 +150,6 @@ renderLeftBar model =
             , Css.width (Css.px 270)
             , Css.displayFlex
             , Css.flexDirection Css.column
-            , Css.backgroundColor (Css.rgb 248 248 248)
             ]
         ]
         ([ renderOptions
@@ -431,7 +430,6 @@ renderEntries model =
         [ css
             [ Css.displayFlex
             , Css.flexDirection Css.column
-            , Css.backgroundColor <| Css.rgb 248 248 248
             , Css.width <| Css.px 1200
             ]
         ]
@@ -454,7 +452,7 @@ renderEntry entry f =
         [ css
             [ Css.maxWidth (Css.px 1000)
             , Css.padding4 (Css.px 0) (Css.px 2) (Css.px 0) (Css.px 6)
-            , Css.margin4 (Css.px 0) (Css.px 2) (Css.px 6) (Css.px 0)
+            , Css.margin4 (Css.px 6) (Css.px 2) (Css.px 0) (Css.px 0)
             , Css.overflow Css.hidden
             , Css.outline Css.none
             , bgColor
