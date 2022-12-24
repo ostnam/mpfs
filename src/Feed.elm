@@ -49,8 +49,8 @@ type alias Model =
     }
 
 
-default_model : Model
-default_model =
+defaultModel : Model
+defaultModel =
     Model [] None "" "" False All
 
 
@@ -97,8 +97,6 @@ subscriptions _ =
 ---------------------- View functions ----------------------
 ------------------------------------------------------------
 -- Top-level function that renders the entire document.
-
-
 view : Model -> Document Msg
 view model =
     let
@@ -106,7 +104,7 @@ view model =
             Html.Styled.toUnstyled
 
         mainBody =
-            u (view_body model)
+            u (viewBody model)
     in
     case model.popup of
         None ->
@@ -121,8 +119,8 @@ view model =
 
 
 -- Renders the main body: everything outside of popups.
-view_body : Model -> Html.Styled.Html Msg
-view_body model =
+viewBody : Model -> Html.Styled.Html Msg
+viewBody model =
     div
         [ id "main"
         , css
@@ -136,15 +134,15 @@ view_body model =
             , Css.backgroundColor (Css.rgb 248 248 248)
             ]
         ]
-        [ render_left_bar model
-        , render_entries model
+        [ renderLeftBar model
+        , renderEntries model
         ]
 
 
 
 -- Renders the left bar.
-render_left_bar : Model -> Html Msg
-render_left_bar model =
+renderLeftBar : Model -> Html Msg
+renderLeftBar model =
     div
         [ id "leftbar"
         , css
@@ -156,7 +154,7 @@ render_left_bar model =
             , Css.backgroundColor (Css.rgb 248 248 248)
             ]
         ]
-        ([ render_options
+        ([ renderOptions
          , renderTotal model.feeds
          ]
             ++ List.map (renderFeedInLeftBar model.deleteFeedMode) model.feeds
@@ -165,8 +163,6 @@ render_left_bar model =
 
 
 -- Renders the 'total' row on top of the feed list.
-
-
 renderTotal : List Feed -> Html Msg
 renderTotal l =
     let
@@ -186,8 +182,6 @@ renderTotal l =
 
 
 -- Produces the Html element for a single feed, to be inserted in the left bar.
-
-
 renderFeedInLeftBar : Bool -> Feed -> Html Msg
 renderFeedInLeftBar deleteModeOn feed =
     let
@@ -241,23 +235,23 @@ renderFeedInLeftBar deleteModeOn feed =
         ]
 
 
-option_button_style : List Css.Style
-option_button_style =
+optionButtonStyle : List Css.Style
+optionButtonStyle =
     [ Css.margin (Css.px 4)
     , Css.height (Css.pct 100)
     ]
 
 
-option_img_style : List Css.Style
-option_img_style =
+optionImgStyle : List Css.Style
+optionImgStyle =
     [ Css.pointerEvents Css.none
     , Css.height (Css.pct 100)
     , Css.width (Css.pct 100)
     ]
 
 
-render_options : Html Msg
-render_options =
+renderOptions : Html Msg
+renderOptions =
     div
         [ css
             [ Css.height (Css.px 30)
@@ -267,31 +261,31 @@ render_options =
             ]
         ]
         [ div
-            [ css option_button_style
+            [ css optionButtonStyle
             , onClick RefreshButtonPressed
             ]
             [ img
                 [ src "static/images/refresh.png"
-                , css option_img_style
+                , css optionImgStyle
                 ]
                 []
             ]
         , div
-            [ css option_button_style
+            [ css optionButtonStyle
             , onClick AddFeedButtonPressed
             ]
-            [ img [ src "static/images/add_feed.png", css option_img_style ] []
+            [ img [ src "static/images/add_feed.png", css optionImgStyle ] []
             ]
         , div
-            [ css option_button_style
+            [ css optionButtonStyle
             , onClick DeleteFeedButtonPressed
             ]
-            [ img [ src "static/images/remove_feed.png", css option_img_style ] [] ]
+            [ img [ src "static/images/remove_feed.png", css optionImgStyle ] [] ]
         , div
-            [ css option_button_style
+            [ css optionButtonStyle
             , onClick SettingsButtonPressed
             ]
-            [ img [ src "static/images/settings.png", css option_img_style ] [] ]
+            [ img [ src "static/images/settings.png", css optionImgStyle ] [] ]
         ]
 
 
@@ -342,10 +336,10 @@ popupTopBar title =
             [ text title ]
         , div
             [ onClick ClosePopupPressed
-            , css option_button_style
+            , css optionButtonStyle
             ]
             [ img
-                [ css option_img_style
+                [ css optionImgStyle
                 , src "static/images/close.png"
                 ]
                 []
@@ -412,8 +406,8 @@ renderSettingsPopup _ =
         ]
 
 
-render_entries : Model -> Html Msg
-render_entries model =
+renderEntries : Model -> Html Msg
+renderEntries model =
     let
         unpackEntries : Feed -> List { feed : FeedData, entry : Entry }
         unpackEntries f =
@@ -604,8 +598,6 @@ displayTime t =
 ------------------------------------------------------------
 -------------------- Updating the model --------------------
 ------------------------------------------------------------
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -778,11 +770,9 @@ updateEntries entries feeds =
 ------------------------------------------------------------
 --------------------------- Init ---------------------------
 ------------------------------------------------------------
-
-
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( default_model
+    ( defaultModel
     , Http.get
         { url = "/subscriptions"
         , expect = Http.expectJson ReceivedSubscribedFeeds feedDataListDecoder
