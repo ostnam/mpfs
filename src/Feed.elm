@@ -92,7 +92,6 @@ subscriptions _ =
     Sub.none
 
 
-
 ------------------------------------------------------------
 ---------------------- View functions ----------------------
 ------------------------------------------------------------
@@ -161,7 +160,6 @@ renderLeftBar model =
         )
 
 
-
 -- Renders the 'total' row on top of the feed list.
 renderTotal : List Feed -> Html Msg
 renderTotal l =
@@ -178,7 +176,6 @@ renderTotal l =
         , onClick <| SelectFeed All
         ]
         [ text (String.fromInt totCount ++ " entries") ]
-
 
 
 -- Produces the Html element for a single feed, to be inserted in the left bar.
