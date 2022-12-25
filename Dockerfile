@@ -6,7 +6,9 @@ WORKDIR /app
 
 RUN pip install -r requirements.txt
 
-COPY . /app
+COPY *.py .
+COPY static ./static
+COPY templates ./templates
 
 ENTRYPOINT [ "python" ]
 
