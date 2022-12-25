@@ -1,10 +1,5 @@
 {-# LANGUAGE OverloadedRecordDot #-}
-module Types ( Feed
-             , FeedItem
-             , parseFeed
-             , fillMissingPublishedTime
-             ) where
-
+module Types where
 
 import Text.Feed.Import ( parseFeedSource )
 import Data.Maybe (mapMaybe)
@@ -13,6 +8,7 @@ import Data.Time.RFC822 ( parseTimeRFC822 )
 import Control.Monad ( msum )
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TLazy
+import Data.ByteString.Lazy ( ByteString )
 import qualified Data.Time as Time
 import qualified Text.Feed.Types as FTypes
 import qualified Text.Atom.Feed as Atom
@@ -36,7 +32,7 @@ data FeedItem = FeedItem
   }
 
 
-parseFeed :: T.Text -> TLazy.Text -> [FeedItem]
+parseFeed :: T.Text -> ByteString -> [FeedItem]
 parseFeed parentFeedUrl t = case parseFeedSource t of
   Just (FTypes.AtomFeed f) -> mapMaybe (atomEntryToItem parentFeedUrl) f.feedEntries
   Just (FTypes.RSSFeed  f) -> mapMaybe (rss2EntryToItem parentFeedUrl) f.rssChannel.rssItems
