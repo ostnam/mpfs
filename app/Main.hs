@@ -86,8 +86,10 @@ main = do
     post "/entries_batch" $ do
       reqBody <- body
       items <- case Aeson.decode reqBody of
-        Just (feeds :: [Types.Feed]) -> concat <$> mapM (liftIO . Data.getItems conn) feeds
-        _          -> return []
+        Just (feeds :: [Types.Feed]) -> do
+          _ <- liftIO $ forkIO $ Data.refreshEveryFeed conn
+          concat <$> mapM (liftIO . Data.getItems conn) feeds
+        _ -> return  []
       json items
 
   DB.close conn
