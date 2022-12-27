@@ -52,7 +52,7 @@ main = do
   conn <- DB.open dbPath
   Data.setUpDb conn
 
-  forkIO $ Data.refreshLoop conn
+  _ <- forkIO $ Data.refreshLoop conn
 
   scotty 8080 $ do
     middleware $ auth userId sessionId
