@@ -3,12 +3,14 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Data where
 
-import Data.Text as T
 import Network.Wreq ( get, responseBody )
 import Control.Lens
 import Text.RawString.QQ
-import qualified Types
+import Control.Concurrent ( threadDelay )
+import Control.Monad (liftM)
+import qualified Data.Text as T
 import qualified Database.SQLite.Simple as DB
+import qualified Types
 
 
 refreshFeed :: Types.Feed -> IO [Types.FeedItem]
@@ -53,3 +55,16 @@ deleteFeed conn = DB.execute conn "DELETE FROM feeds WHERE name = ? AND url = ?;
 
 markSeen :: DB.Connection -> Types.FeedItem -> IO ()
 markSeen conn = DB.execute conn "UPDATE entries SET seen = 1 WHERE link = ?"
+
+refreshEveryFeed :: DB.Connection -> IO ()
+refreshEveryFeed conn = do
+  feeds <- getFeeds conn
+  items <- liftM concat $ mapM refreshFeed $ feeds
+  mapM (saveItem conn) items
+  return ()
+
+refreshLoop :: DB.Connection -> IO ()
+refreshLoop conn = do
+  refreshEveryFeed conn
+  threadDelay $ 1000000 * 60 * 10
+  refreshLoop conn
