@@ -59,9 +59,8 @@ markSeen conn = DB.execute conn "UPDATE entries SET seen = 1 WHERE link = ?"
 refreshEveryFeed :: DB.Connection -> IO ()
 refreshEveryFeed conn = do
   feeds <- getFeeds conn
-  items <- liftM concat $ mapM refreshFeed $ feeds
-  mapM (saveItem conn) items
-  return ()
+  items <- concat <$> mapM refreshFeed feeds
+  mapM_ (saveItem conn) items
 
 refreshLoop :: DB.Connection -> IO ()
 refreshLoop conn = do
