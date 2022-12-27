@@ -18,7 +18,7 @@ type alias EntryData =
     , link : String
     , published : Time.Posix
     , seen : Bool
-    , feed : String
+    , parentFeedUrl : String
     }
 
 
@@ -56,4 +56,4 @@ entryDataDecoder =
         |> required "link" Json.Decode.string
         |> required "published" Json.Decode.Extra.datetime
         |> required "seen" Json.Decode.bool
-        |> required "feed" Json.Decode.string
+        |> required "parentFeedUrl" Json.Decode.string

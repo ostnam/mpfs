@@ -763,13 +763,12 @@ updateEntries : List EntryData -> List Feed -> List Feed
 updateEntries entries feeds =
     let
         sameFeed feed entryData =
-            entryData.feed == feed.data.url
+            entryData.parentFeedUrl == feed.data.url
 
         updateFn entries2 feed =
-            { feed
-                | entries =
-                    List.filter (sameFeed feed) entries2
-                        |> List.map (\e -> Entry e False)
+            { feed | entries =
+                List.filter (sameFeed feed) entries2
+                    |> List.map (\e -> Entry e False)
             }
     in
     List.map (updateFn entries) feeds
