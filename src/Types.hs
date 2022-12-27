@@ -1,4 +1,7 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 module Types where
 
 import Text.Feed.Import ( parseFeedSource )
@@ -6,22 +9,36 @@ import Data.Maybe (mapMaybe)
 import Data.Time.Format.ISO8601 ( iso8601ParseM )
 import Data.Time.RFC822 ( parseTimeRFC822 )
 import Control.Monad ( msum )
+import Data.Aeson
+import GHC.Generics
+import Data.ByteString.Lazy ( ByteString )
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TLazy
-import Data.ByteString.Lazy ( ByteString )
 import qualified Data.Time as Time
 import qualified Text.Feed.Types as FTypes
 import qualified Text.Atom.Feed as Atom
 import qualified Text.RSS.Syntax as RSS
 import qualified Text.RSS1.Syntax as RSS1
 import qualified Data.Time as Time
-
+import qualified Database.SQLite.Simple as DB
+import qualified Data.Vector
 
 data Feed = Feed 
   { name :: T.Text
   , url :: T.Text
-  }
+  } deriving (Generic, Show, FromJSON)
 
+instance ToJSON Feed where
+  toJSON feed = object [ "name" .= feed.name
+                       , "url"  .= feed.url
+                       ]
+  toJSONList feeds = Array $ Data.Vector.fromList $ toJSON <$> feeds
+
+instance DB.FromRow Feed where
+  fromRow = Feed <$> DB.field <*> DB.field
+
+instance DB.ToRow Feed where
+  toRow f = [DB.SQLText f.name, DB.SQLText f.url]
 
 data FeedItem = FeedItem
   { title :: T.Text
@@ -29,7 +46,18 @@ data FeedItem = FeedItem
   , published :: Maybe Time.UTCTime
   , seen :: Bool
   , parentFeedUrl :: T.Text
-  }
+  } deriving (Generic, Show, ToJSON, FromJSON)
+
+instance DB.FromRow FeedItem where
+  fromRow = FeedItem <$> DB.field <*> DB.field <*> DB.field <*> DB.field <*> DB.field
+
+instance DB.ToRow FeedItem where
+  toRow f = DB.toRow ( f.title
+                     , f.link
+                     , f.published
+                     , f.seen
+                     , f.parentFeedUrl
+                     )
 
 
 parseFeed :: T.Text -> ByteString -> [FeedItem]
@@ -67,7 +95,7 @@ rss2EntryToItem parentFeedUrl item = let
 
 
 atomEntryToItem :: T.Text -> Atom.Entry -> Maybe FeedItem
-atomEntryToItem parentFeedUrl e  = let 
+atomEntryToItem parentFeedUrl e = let
   link = case e.entryLinks of
     (x:_) -> Just x.linkHref
     []    -> Nothing   
