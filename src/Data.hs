@@ -42,13 +42,13 @@ getItems :: DB.Connection -> Types.Feed -> IO [Types.FeedItem]
 getItems conn feed = DB.query conn "SELECT * FROM entries WHERE feed = ?;" $ DB.Only feed.url
 
 saveItem :: DB.Connection -> Types.FeedItem -> IO ()
-saveItem conn = DB.execute conn "INSERT INTO entries VALUES (?, ?, ?, ?, ?);"
+saveItem conn = DB.execute conn "INSERT OR REPLACE INTO entries VALUES (?, ?, ?, ?, ?);"
 
 getFeeds :: DB.Connection -> IO [Types.Feed]
 getFeeds conn = DB.query_ conn "SELECT * FROM feeds;"
 
 addFeed :: DB.Connection -> Types.Feed -> IO ()
-addFeed conn = DB.execute conn "INSERT INTO feeds VALUES (?, ?);"
+addFeed conn = DB.execute conn "INSERT OR IGNORE INTO feeds VALUES (?, ?);"
 
 deleteFeed :: DB.Connection -> Types.Feed -> IO ()
 deleteFeed conn = DB.execute conn "DELETE FROM feeds WHERE name = ? AND url = ?;"
