@@ -13,13 +13,11 @@ import Data.Aeson
 import GHC.Generics
 import Data.ByteString.Lazy ( ByteString )
 import qualified Data.Text as T
-import qualified Data.Text.Lazy as TLazy
 import qualified Data.Time as Time
 import qualified Text.Feed.Types as FTypes
 import qualified Text.Atom.Feed as Atom
 import qualified Text.RSS.Syntax as RSS
 import qualified Text.RSS1.Syntax as RSS1
-import qualified Data.Time as Time
 import qualified Database.SQLite.Simple as DB
 import qualified Data.Vector
 
