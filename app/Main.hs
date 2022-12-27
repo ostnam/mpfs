@@ -17,8 +17,6 @@ import qualified Database.SQLite.Simple as DB
 import qualified Data
 import qualified Types
 
-import Debug.Trace (trace)
-
 authSettings :: AuthSettings
 authSettings = "MPFS" { authIsProtected = needsAuth }
 
@@ -71,7 +69,7 @@ main = do
       reqBody <- body
       case Aeson.decode reqBody of
         Just feed -> liftIO $ Data.addFeed conn feed
-        _ ->  return $ trace (show reqBody) ()
+        _ ->  return ()
       text ""
 
     delete "/subscriptions" $ do
