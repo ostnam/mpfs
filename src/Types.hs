@@ -59,57 +59,57 @@ instance DB.ToRow FeedItem where
 
 
 parseFeed :: T.Text -> ByteString -> [FeedItem]
-parseFeed parentFeedUrl t = case parseFeedSource t of
-  Just (FTypes.AtomFeed f) -> mapMaybe (atomEntryToItem parentFeedUrl) f.feedEntries
-  Just (FTypes.RSSFeed  f) -> mapMaybe (rss2EntryToItem parentFeedUrl) f.rssChannel.rssItems
-  Just (FTypes.RSS1Feed f) -> rss1EntryToItem parentFeedUrl <$> f.feedItems
+parseFeed feedUrl t = case parseFeedSource t of
+  Just (FTypes.AtomFeed f) -> mapMaybe (atomEntryToItem feedUrl) f.feedEntries
+  Just (FTypes.RSSFeed  f) -> mapMaybe (rss2EntryToItem feedUrl) f.rssChannel.rssItems
+  Just (FTypes.RSS1Feed f) -> rss1EntryToItem feedUrl <$> f.feedItems
   Just (FTypes.XMLFeed  _) -> []
   Nothing                  -> []
 
 
 rss1EntryToItem :: T.Text -> RSS1.Item -> FeedItem
-rss1EntryToItem parentFeedUrl item =  FeedItem 
+rss1EntryToItem feedUrl item = FeedItem
   { title = item.itemTitle
   , link = item.itemLink
   , published = Nothing
   , seen = False
-  , parentFeedUrl = parentFeedUrl
+  , parentFeedUrl = feedUrl
   }
 
 
 rss2EntryToItem :: T.Text -> RSS.RSSItem -> Maybe FeedItem
-rss2EntryToItem parentFeedUrl item = let
-  title = msum [item.rssItemTitle, item.rssItemDescription]
-  published = Time.zonedTimeToUTC <$> (item.rssItemPubDate >>= parseTimeRFC822)
-  in case (title, item.rssItemLink) of
+rss2EntryToItem feedUrl item = let
+  title' = msum [item.rssItemTitle, item.rssItemDescription]
+  published' = Time.zonedTimeToUTC <$> (item.rssItemPubDate >>= parseTimeRFC822)
+  in case (title', item.rssItemLink) of
     (Just t, Just l) -> Just $ FeedItem
       { title = t
       , link = l
-      , published = published
+      , published = published'
       , seen = False
-      , parentFeedUrl = parentFeedUrl
+      , parentFeedUrl = feedUrl
       }
     _ -> Nothing
 
 
 atomEntryToItem :: T.Text -> Atom.Entry -> Maybe FeedItem
-atomEntryToItem parentFeedUrl e = let
-  link = case e.entryLinks of
+atomEntryToItem feedUrl e = let
+  link' = case e.entryLinks of
     (x:_) -> Just x.linkHref
     []    -> Nothing   
-  title = case e.entryTitle of
+  title' = case e.entryTitle of
     Atom.TextString t -> Just t
     Atom.HTMLString t -> Just t
     Atom.XHTMLString _ -> Nothing
-  published = iso8601ParseM $ T.unpack e.entryUpdated
+  published' = iso8601ParseM $ T.unpack e.entryUpdated
 
-  in case (link, title) of
+  in case (link', title') of
     (Just l, Just t) -> Just $ FeedItem 
       { title = t
       , link = l
-      , published = published
+      , published = published'
       , seen = False
-      , parentFeedUrl = parentFeedUrl
+      , parentFeedUrl = feedUrl
       }
     _ -> Nothing
 
