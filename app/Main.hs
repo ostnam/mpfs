@@ -13,7 +13,6 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent ( forkIO )
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString as BS
-import qualified Data.ByteString.UTF8 as BL
 import qualified Database.SQLite.Simple as DB
 import qualified Data
 import qualified Types
