@@ -39,8 +39,8 @@ setUpDb conn = do
 getItems :: DB.Connection -> Types.Feed -> IO [Types.FeedItem]
 getItems conn feed = DB.query conn "SELECT * FROM entries WHERE feed = ?;" $ DB.Only feed.url
 
-saveItems :: DB.Connection -> Types.FeedItem -> IO ()
-saveItems conn = DB.execute conn "INSERT INTO entries VALUES (?, ?, ?, ?, ?);"
+saveItem :: DB.Connection -> Types.FeedItem -> IO ()
+saveItem conn = DB.execute conn "INSERT INTO entries VALUES (?, ?, ?, ?, ?);"
 
 getFeeds :: DB.Connection -> IO [Types.Feed]
 getFeeds conn = DB.query_ conn "SELECT * FROM feeds;"
