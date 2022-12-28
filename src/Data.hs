@@ -4,10 +4,9 @@
 module Data where
 
 import Network.Wreq ( get, responseBody )
-import Control.Lens
-import Text.RawString.QQ
+import Control.Lens ( (^.) )
+import Text.RawString.QQ ( r )
 import Control.Concurrent ( threadDelay )
-import Control.Monad (liftM)
 import qualified Data.Text as T
 import qualified Database.SQLite.Simple as DB
 import qualified Types

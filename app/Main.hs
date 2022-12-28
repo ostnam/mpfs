@@ -5,10 +5,9 @@ module Main (main) where
 import Web.Scotty
 import Network.Wai.Middleware.HttpAuth
 import System.Environment (getEnv, lookupEnv)
-import Network.Wai ( Request, pathInfo, Middleware )
+import Network.Wai ( Middleware )
 import Data.ByteString.Internal (c2w)
 import Network.Wai.Middleware.Static
-import Control.Monad (mapM, liftM)
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent ( forkIO )
 import qualified Data.Aeson as Aeson
