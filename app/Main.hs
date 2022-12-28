@@ -18,12 +18,7 @@ import qualified Data
 import qualified Types
 
 authSettings :: AuthSettings
-authSettings = "MPFS" { authIsProtected = needsAuth }
-
-needsAuth :: Request -> IO Bool
-needsAuth req = return $ case pathInfo req of
-  "login":_ -> False
-  _         -> True
+authSettings = "MPFS" { authIsProtected = \_ -> return True }
 
 checkCreds :: String -> String -> BS.ByteString -> BS.ByteString -> IO Bool
 checkCreds shouldBeUser shouldBePw username password = return $
