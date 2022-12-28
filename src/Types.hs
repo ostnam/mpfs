@@ -5,7 +5,7 @@
 module Types where
 
 import Text.Feed.Import ( parseFeedSource )
-import Data.Maybe (mapMaybe)
+import Data.Maybe ( mapMaybe, fromMaybe )
 import Data.Time.Format.ISO8601 ( iso8601ParseM )
 import Data.Time.RFC822 ( parseTimeRFC822 )
 import Control.Monad ( msum )
@@ -79,11 +79,11 @@ rss1EntryToItem feedUrl item = FeedItem
 
 rss2EntryToItem :: T.Text -> RSS.RSSItem -> Maybe FeedItem
 rss2EntryToItem feedUrl item = let
-  title' = msum [item.rssItemTitle, item.rssItemDescription]
+  title' = fromMaybe "No title" $ msum [item.rssItemTitle, item.rssItemDescription]
   published' = Time.zonedTimeToUTC <$> (item.rssItemPubDate >>= parseTimeRFC822)
-  in case (title', item.rssItemLink) of
-    (Just t, Just l) -> Just $ FeedItem
-      { title = t
+  in case item.rssItemLink of
+    Just l -> Just $ FeedItem
+      { title = title'
       , link = l
       , published = published'
       , seen = False
@@ -97,15 +97,17 @@ atomEntryToItem feedUrl e = let
   link' = case e.entryLinks of
     (x:_) -> Just x.linkHref
     []    -> Nothing   
+
   title' = case e.entryTitle of
-    Atom.TextString t -> Just t
-    Atom.HTMLString t -> Just t
-    Atom.XHTMLString _ -> Nothing
+    Atom.TextString t  -> t
+    Atom.HTMLString t  -> t
+    Atom.XHTMLString _ -> "No title"
+
   published' = iso8601ParseM $ T.unpack e.entryUpdated
 
-  in case (link', title') of
-    (Just l, Just t) -> Just $ FeedItem 
-      { title = t
+  in case link' of
+    Just l -> Just $ FeedItem
+      { title = title'
       , link = l
       , published = published'
       , seen = False
