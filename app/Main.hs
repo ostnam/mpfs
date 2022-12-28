@@ -82,7 +82,7 @@ main = do
       items <- case Aeson.decode reqBody of
         Just (feeds :: [Types.Feed]) -> do
           _ <- liftIO $ forkIO $ Data.refreshEveryFeed conn
-          concat <$> mapM (liftIO . Data.getItems conn) feeds
+          concat <$> mapM (liftIO . Data.getUnseenItems conn) feeds
         _ -> return  []
       json items
 
