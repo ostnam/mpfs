@@ -94,10 +94,6 @@ rss2EntryToItem feedUrl item = let
 
 atomEntryToItem :: T.Text -> Atom.Entry -> Maybe FeedItem
 atomEntryToItem feedUrl e = let
-  link' = case e.entryLinks of
-    (x:_) -> Just x.linkHref
-    []    -> Nothing   
-
   title' = case e.entryTitle of
     Atom.TextString t  -> t
     Atom.HTMLString t  -> t
@@ -105,10 +101,10 @@ atomEntryToItem feedUrl e = let
 
   published' = iso8601ParseM $ T.unpack e.entryUpdated
 
-  in case link' of
-    Just l -> Just $ FeedItem
+  in case e.entryLinks of
+    (x:_) -> Just $ FeedItem
       { title = title'
-      , link = l
+      , link = x.linkHref
       , published = published'
       , seen = False
       , parentFeedUrl = feedUrl
