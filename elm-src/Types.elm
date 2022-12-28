@@ -5,6 +5,7 @@ import Json.Decode.Extra
 import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode
 import Time
+import Iso8601
 
 
 type alias FeedData =
@@ -45,7 +46,11 @@ feedDataEncoder feed =
 entryDataEncoder : EntryData -> Encode.Value
 entryDataEncoder entry =
     Encode.object
-        [ ( "url", Encode.string entry.link )
+        [ ("title", Encode.string entry.title)
+        , ("link", Encode.string entry.link)
+        , ("published", Encode.string <| Iso8601.fromTime entry.published)
+        , ("seen", Encode.bool entry.seen)
+        , ("parentFeedUrl", Encode.string entry.parentFeedUrl)
         ]
 
 
