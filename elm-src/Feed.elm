@@ -517,90 +517,43 @@ renderEntry entry f =
 displayTime : Time.Posix -> String
 displayTime t =
     let
-        tz =
-            Time.utc
+        tz = Time.utc
 
-        day =
-            case Time.toWeekday tz t of
-                Time.Mon ->
-                    "Mon"
+        day = case Time.toWeekday tz t of
+            Time.Mon -> "Mon"
+            Time.Tue -> "Tue"
+            Time.Wed -> "Wed"
+            Time.Thu -> "Thu"
+            Time.Fri -> "Fri"
+            Time.Sat -> "Sat"
+            Time.Sun -> "Sun"
 
-                Time.Tue ->
-                    "Tue"
+        dayNum = String.fromInt <| Time.toDay tz t
 
-                Time.Wed ->
-                    "Wed"
+        month = case Time.toMonth tz t of
+            Time.Jan -> "Jan"
+            Time.Feb -> "Feb"
+            Time.Mar -> "Mar"
+            Time.Apr -> "Apr"
+            Time.May -> "May"
+            Time.Jun -> "Jun"
+            Time.Jul -> "Jul"
+            Time.Aug -> "Aug"
+            Time.Sep -> "Sep"
+            Time.Oct -> "Oct"
+            Time.Nov -> "Nov"
+            Time.Dec -> "Dec"
 
-                Time.Thu ->
-                    "Thu"
+        pad str = if String.length str < 2 then
+            "0" ++ str
+            else str
 
-                Time.Fri ->
-                    "Fri"
-
-                Time.Sat ->
-                    "Sat"
-
-                Time.Sun ->
-                    "Sun"
-
-        month =
-            case Time.toMonth tz t of
-                Time.Jan ->
-                    "Jan"
-
-                Time.Feb ->
-                    "Feb"
-
-                Time.Mar ->
-                    "Mar"
-
-                Time.Apr ->
-                    "Apr"
-
-                Time.May ->
-                    "May"
-
-                Time.Jun ->
-                    "Jun"
-
-                Time.Jul ->
-                    "Jul"
-
-                Time.Aug ->
-                    "Aug"
-
-                Time.Sep ->
-                    "Sep"
-
-                Time.Oct ->
-                    "Oct"
-
-                Time.Nov ->
-                    "Nov"
-
-                Time.Dec ->
-                    "Dec"
-
-        pad str =
-            if String.length str < 2 then
-                "0" ++ str
-
-            else
-                str
-
-        year =
-            Time.toYear tz t |> String.fromInt |> pad
-
-        h =
-            Time.toHour tz t |> String.fromInt |> pad
-
-        m =
-            Time.toMinute tz t |> String.fromInt |> pad
-
-        s =
-            Time.toSecond tz t |> String.fromInt |> pad
+        year = Time.toYear tz t |> String.fromInt |> pad
+        h = Time.toHour tz t |> String.fromInt |> pad
+        m = Time.toMinute tz t |> String.fromInt |> pad
+        s = Time.toSecond tz t |> String.fromInt |> pad
     in
-    day ++ " " ++ month ++ " " ++ year ++ " " ++ h ++ ":" ++ m ++ ":" ++ s
+    day ++ " " ++ dayNum ++ " " ++ month ++ " " ++ year ++ " " ++ h ++ ":" ++ m ++ ":" ++ s
 
 
 
