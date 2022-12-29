@@ -8,7 +8,9 @@ import Html.Styled.Attributes exposing (..)
 import Html.Styled.Events exposing (..)
 import Http
 import Json.Decode
+import Task
 import Time
+import TimeZone
 import Types exposing (..)
 
 
@@ -46,12 +48,13 @@ type alias Model =
     , addFeedUrl : String
     , deleteFeedMode : Bool
     , selectedFeed : FeedSelected
+    , tz : Time.Zone
     }
 
 
 defaultModel : Model
 defaultModel =
-    Model [] None "" "" False All
+    Model [] None "" "" False All Time.utc
 
 
 type Msg
@@ -71,7 +74,7 @@ type Msg
     | SeenEntry EntryData FeedData
     | DeleteEntryButtonPressed EntryData FeedData
     | SubscriptionsJsonClicked
-
+    | GotTimeZone Time.Zone
 
 
 ------------------------------------------------------------
@@ -435,7 +438,7 @@ renderEntries model =
         ]
     <| case displayedEntries of
         [] -> [renderNoEntryMsg]
-        ls -> List.map (\x -> renderEntry x.entry x.feed) ls
+        ls -> List.map (\x -> renderEntry x.entry model.tz x.feed) ls
 
 
 renderNoEntryMsg : Html Msg
@@ -451,8 +454,8 @@ renderNoEntryMsg =
         [ text "No entry available in current feed"
         ]
 
-renderEntry : Entry -> FeedData -> Html Msg
-renderEntry entry f =
+renderEntry : Entry -> Time.Zone -> FeedData -> Html Msg
+renderEntry entry tz f =
     let
         bgColor =
             Css.backgroundColor <|
@@ -510,15 +513,13 @@ renderEntry entry f =
                     ]
                 ]
             ]
-        , div [] [ text <| f.name ++ ", " ++ displayTime entry.data.published ]
+        , div [] [ text <| f.name ++ ", " ++ displayTime entry.data.published tz ]
         ]
 
 
-displayTime : Time.Posix -> String
-displayTime t =
+displayTime : Time.Posix -> Time.Zone -> String
+displayTime t tz =
     let
-        tz = Time.utc
-
         day = case Time.toWeekday tz t of
             Time.Mon -> "Mon"
             Time.Tue -> "Tue"
@@ -674,6 +675,9 @@ update msg model =
         NewEntries _ ->
             ( model, Cmd.none )
 
+        GotTimeZone t ->
+            ( { model | tz = t }, Cmd.none )
+
 
 addFeeds : List Feed -> List FeedData -> List Feed
 addFeeds old new =
@@ -734,8 +738,21 @@ updateEntries entries feeds =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( defaultModel
+    , runInit )
+
+
+runInit : Cmd Msg
+runInit = Cmd.batch
+    [ Task.attempt timeZoneHandler TimeZone.getZone
     , Http.get
         { url = "/subscriptions"
         , expect = Http.expectJson ReceivedSubscribedFeeds feedDataListDecoder
         }
-    )
+    ]
+
+
+timeZoneHandler : Result TimeZone.Error ( String, Time.Zone ) -> Msg
+timeZoneHandler r =
+    GotTimeZone <| case r of
+        Err _      -> Time.utc
+        Ok (_, tz) -> tz
