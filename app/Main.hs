@@ -10,6 +10,7 @@ import Data.ByteString.Internal (c2w)
 import Network.Wai.Middleware.Static
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent ( forkIO )
+import Data.Maybe ( fromMaybe )
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString as BS
 import qualified Database.SQLite.Simple as DB
@@ -28,18 +29,14 @@ checkCreds shouldBeUser shouldBePw username password = return $
 auth :: String -> String -> Middleware
 auth userId sessionId = basicAuth (checkCreds userId sessionId) authSettings
 
-getDbPath :: () -> IO String
-getDbPath _ = do
-  isEnv <- lookupEnv "MPFS_PRODUCTION"
-  case isEnv of
-    Just _ -> return "/data/feed.db"
-    _      -> return "./feed.db"
+getDbPath :: IO String
+getDbPath = fromMaybe "./feed.db" <$> lookupEnv "MPFS_DB_PATH"
 
 main :: IO ()
 main = do
   userId <- getEnv "MPFS_USERID"
   sessionId <- getEnv "MPFS_SESSION_KEY"
-  dbPath <- getDbPath ()
+  dbPath <- getDbPath
 
   conn <- DB.open dbPath
   Data.setUpDb conn
