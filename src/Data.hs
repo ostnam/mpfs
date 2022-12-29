@@ -11,32 +11,27 @@ import qualified Data.Text as T
 import qualified Database.SQLite.Simple as DB
 import qualified Types
 
-
-refreshFeed :: Types.Feed -> IO [Types.FeedItem]
-refreshFeed f = do
-  resp <- get $ T.unpack f.url
-  return $ Types.parseFeed f.url $ resp ^. responseBody
-
-
+--- DB setup
 setUpDb :: DB.Connection -> IO ()
 setUpDb conn = do
   DB.execute_ conn
     [r|CREATE TABLE IF NOT EXISTS entries (
-      title text,
-      link text,
-      published text,
-      seen int,
-      feed text,
+      title     text NOT NULL,
+      link      text NOT NULL,
+      published text NOT NULL,
+      seen      int  NOT NULL,
+      feed      text NOT NULL,
       CONSTRAINT uniqs UNIQUE (title, link, feed)
     );|]
 
   DB.execute_ conn
     [r|CREATE TABLE IF NOT EXISTS feeds (
       name text NOT NULL,
-      url text PRIMARY KEY
+      url  text PRIMARY KEY
     );|]
 
 
+--- DB queries
 getUnseenItems :: DB.Connection -> Types.Feed -> IO [Types.FeedItem]
 getUnseenItems conn feed = DB.query conn "SELECT * FROM entries WHERE feed = ? and seen = 0;" $ DB.Only feed.url
 
@@ -54,6 +49,14 @@ deleteFeed conn = DB.execute conn "DELETE FROM feeds WHERE name = ? AND url = ?;
 
 markSeen :: DB.Connection -> Types.FeedItem -> IO ()
 markSeen conn item = DB.execute conn "UPDATE entries SET seen = 1 WHERE link = ?;" $ DB.Only item.link
+
+
+--- Updating feeds
+refreshFeed :: Types.Feed -> IO [Types.FeedItem]
+refreshFeed f = do
+  resp <- get $ T.unpack f.url
+  mapM fillDefaults <$> Types.parseFeed $ resp ^. responseBody
+    where fillDefaults = Types.toFeedItem "No title" "missing" f.url
 
 refreshEveryFeed :: DB.Connection -> IO ()
 refreshEveryFeed conn = do

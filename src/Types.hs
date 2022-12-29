@@ -5,12 +5,12 @@
 module Types where
 
 import Text.Feed.Import ( parseFeedSource )
-import Data.Maybe ( mapMaybe, fromMaybe )
+import Data.Maybe ( fromMaybe )
 import Data.Time.Format.ISO8601 ( iso8601ParseM )
 import Data.Time.RFC822 ( parseTimeRFC822 )
 import Control.Monad ( msum )
 import Data.Aeson
-import GHC.Generics
+import GHC.Generics ( Generic )
 import Data.ByteString.Lazy ( ByteString )
 import qualified Data.Text as T
 import qualified Data.Time as Time
@@ -38,10 +38,44 @@ instance DB.FromRow Feed where
 instance DB.ToRow Feed where
   toRow f = [DB.SQLText f.name, DB.SQLText f.url]
 
+data ParsedFeedItem = ParsedFeedItem
+  { parsedTitle :: Maybe T.Text
+  , parsedLink :: Maybe T.Text
+  , parsedPublished :: Maybe Time.UTCTime
+  } deriving (Generic, Show, ToJSON, FromJSON)
+
+
+toFeedItem :: T.Text
+           -> T.Text
+           -> T.Text
+           -> ParsedFeedItem
+           -> IO FeedItem
+toFeedItem defaultTitle defaultLink parentFeed entry = let
+  finalTitle = fromMaybe defaultTitle entry.parsedTitle
+  finalLink = fromMaybe defaultLink entry.parsedLink
+  in case entry.parsedPublished of
+    Just t -> return $ FeedItem
+      { title = finalTitle
+      , link = finalLink
+      , published = t
+      , seen = False
+      , parentFeedUrl = parentFeed
+      }
+    Nothing -> do
+      now <- Time.getCurrentTime
+      return $ FeedItem
+        { title = finalTitle
+        , link = finalLink
+        , published = now
+        , seen = False
+        , parentFeedUrl = parentFeed
+        }
+
+
 data FeedItem = FeedItem
   { title :: T.Text
   , link :: T.Text
-  , published :: Maybe Time.UTCTime
+  , published :: Time.UTCTime
   , seen :: Bool
   , parentFeedUrl :: T.Text
   } deriving (Generic, Show, ToJSON, FromJSON)
@@ -58,70 +92,43 @@ instance DB.ToRow FeedItem where
                      )
 
 
-parseFeed :: T.Text -> ByteString -> [FeedItem]
-parseFeed feedUrl t = case parseFeedSource t of
-  Just (FTypes.AtomFeed f) -> mapMaybe (atomEntryToItem feedUrl) f.feedEntries
-  Just (FTypes.RSSFeed  f) -> mapMaybe (rss2EntryToItem feedUrl) f.rssChannel.rssItems
-  Just (FTypes.RSS1Feed f) -> rss1EntryToItem feedUrl <$> f.feedItems
+parseFeed :: ByteString -> [ParsedFeedItem]
+parseFeed t = case parseFeedSource t of
+  Just (FTypes.AtomFeed f) -> atomEntryToItem <$> f.feedEntries
+  Just (FTypes.RSSFeed  f) -> rss2EntryToItem <$> f.rssChannel.rssItems
+  Just (FTypes.RSS1Feed f) -> rss1EntryToItem <$> f.feedItems
   Just (FTypes.XMLFeed  _) -> []
   Nothing                  -> []
 
 
-rss1EntryToItem :: T.Text -> RSS1.Item -> FeedItem
-rss1EntryToItem feedUrl item = FeedItem
-  { title = item.itemTitle
-  , link = item.itemLink
-  , published = Nothing
-  , seen = False
-  , parentFeedUrl = feedUrl
+rss1EntryToItem :: RSS1.Item -> ParsedFeedItem
+rss1EntryToItem item = ParsedFeedItem
+  { parsedTitle = Just item.itemTitle
+  , parsedLink = Just item.itemLink
+  , parsedPublished = Nothing
   }
 
 
-rss2EntryToItem :: T.Text -> RSS.RSSItem -> Maybe FeedItem
-rss2EntryToItem feedUrl item = let
-  title' = fromMaybe "No title" $ msum [item.rssItemTitle, item.rssItemDescription]
-  published' = Time.zonedTimeToUTC <$> (item.rssItemPubDate >>= parseTimeRFC822)
-  in case item.rssItemLink of
-    Just l -> Just $ FeedItem
-      { title = title'
-      , link = l
-      , published = published'
-      , seen = False
-      , parentFeedUrl = feedUrl
-      }
-    _ -> Nothing
+rss2EntryToItem :: RSS.RSSItem -> ParsedFeedItem
+rss2EntryToItem item = ParsedFeedItem
+  { parsedTitle = msum [item.rssItemTitle, item.rssItemDescription]
+  , parsedLink = item.rssItemLink
+  , parsedPublished = Time.zonedTimeToUTC <$> (item.rssItemPubDate >>= parseTimeRFC822)
+  }
 
 
-atomEntryToItem :: T.Text -> Atom.Entry -> Maybe FeedItem
-atomEntryToItem feedUrl e = let
+atomEntryToItem :: Atom.Entry -> ParsedFeedItem
+atomEntryToItem e = let
   title' = case e.entryTitle of
-    Atom.TextString t  -> t
-    Atom.HTMLString t  -> t
-    Atom.XHTMLString _ -> "No title"
-
+    Atom.TextString t  -> Just t
+    Atom.HTMLString t  -> Just t
+    Atom.XHTMLString _ -> Nothing
   published' = iso8601ParseM $ T.unpack e.entryUpdated
-
-  in case e.entryLinks of
-    (x:_) -> Just $ FeedItem
-      { title = title'
-      , link = x.linkHref
-      , published = published'
-      , seen = False
-      , parentFeedUrl = feedUrl
+  link' = case e.entryLinks of
+    (x:_) -> Just $ x.linkHref
+    _     -> Nothing
+  in ParsedFeedItem
+      { parsedTitle = title'
+      , parsedLink = link'
+      , parsedPublished = published'
       }
-    _ -> Nothing
-
-
-fillMissingPublishedTime :: FeedItem -> IO FeedItem
-fillMissingPublishedTime item =
-  case item.published of
-    Just _  -> return item
-    Nothing -> do
-      now <- Time.getCurrentTime
-      return FeedItem
-        { title = item.title
-        , link = item.link
-        , published = Just now
-        , seen = item.seen
-        , parentFeedUrl = item.parentFeedUrl
-        }
