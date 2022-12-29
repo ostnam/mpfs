@@ -3,6 +3,7 @@ module Feed exposing (..)
 import Api exposing (..)
 import Browser exposing (Document)
 import Css
+import Css.Animations
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (..)
 import Html.Styled.Events exposing (..)
@@ -49,12 +50,13 @@ type alias Model =
     , deleteFeedMode : Bool
     , selectedFeed : FeedSelected
     , tz : Time.Zone
+    , pendingUpdateResponse : Bool
     }
 
 
 defaultModel : Model
 defaultModel =
-    Model [] None "" "" False All Time.utc
+    Model [] None "" "" False All Time.utc True
 
 
 type Msg
@@ -63,7 +65,6 @@ type Msg
     | SubmitAddFeed
     | SelectFeed FeedSelected
     | DeleteFeed FeedData
-    | NewEntries (List Entry)
     | AddFeedButtonPressed
     | DeleteFeedButtonPressed
     | SettingsButtonPressed
@@ -155,7 +156,7 @@ renderLeftBar model =
             , Css.flexDirection Css.column
             ]
         ]
-        ([ renderOptions
+        ([ renderOptions model
          , renderTotal model.feeds
          ]
             ++ List.map (renderFeedInLeftBar model.deleteFeedMode) model.feeds
@@ -248,9 +249,23 @@ optionImgStyle =
     , Css.width (Css.pct 100)
     ]
 
+refreshButtonAnimation : Model -> List Css.Style
+refreshButtonAnimation model = if model.pendingUpdateResponse
+    then
+        [ Css.animationDuration (Css.sec 1)
+        , Css.animationIterationCount Css.infinite
+        , Css.animationName
+            <| Css.Animations.keyframes
+                [ (  0, [Css.Animations.property "rotate" "0deg"])
+                , (100, [Css.Animations.property "rotate" "360deg"])
+                ]
+        ]
+    else []
 
-renderOptions : Html Msg
-renderOptions =
+
+
+renderOptions : Model -> Html Msg
+renderOptions model =
     div
         [ css
             [ Css.height (Css.px 30)
@@ -265,7 +280,7 @@ renderOptions =
             ]
             [ img
                 [ src "static/images/refresh.png"
-                , css optionImgStyle
+                , css <| optionImgStyle ++ refreshButtonAnimation model
                 ]
                 []
             ]
@@ -651,10 +666,13 @@ update msg model =
         ApiMessage m ->
             case m of
                 Entries (Ok entries) ->
-                    ( { model | feeds = updateEntries entries model.feeds }, Cmd.none )
+                    ( { model
+                        | feeds = updateEntries entries model.feeds
+                        , pendingUpdateResponse = False
+                        }, Cmd.none )
 
                 Entries (Err _) ->
-                    ( model, Cmd.none )
+                    ( { model | pendingUpdateResponse = False }  , Cmd.none )
 
                 NoVal _ ->
                     ( model, Cmd.none )
@@ -666,14 +684,11 @@ update msg model =
             ( model, Cmd.none )
 
         RefreshButtonPressed ->
-            ( model
+            ( { model | pendingUpdateResponse = True }
             , List.map .data model.feeds
                 |> refreshFeeds
                 |> Cmd.map ApiMessage
             )
-
-        NewEntries _ ->
-            ( model, Cmd.none )
 
         GotTimeZone t ->
             ( { model | tz = t }, Cmd.none )
