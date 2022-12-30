@@ -33,7 +33,7 @@ type alias Feed =
 
 type FeedSelected
     = All
-    | Single String
+    | Single FeedData
 
 
 type PopupState
@@ -169,6 +169,7 @@ renderTotal l =
     let
         totCount =
             List.map .entries l
+                |> List.map (List.filter (\e -> not e.seen))
                 |> List.map List.length
                 |> List.foldl (+) 0
     in
@@ -198,7 +199,11 @@ renderFeedInLeftBar deleteModeOn feed =
                     DeleteFeed feed.data
 
                 else
-                    SelectFeed (Single feed.data.url)
+                    SelectFeed (Single feed.data)
+
+        numUnseenEntries = feed.entries
+            |> List.filter (\e -> not e.seen)
+            |> List.length
     in
     div
         [ css
@@ -218,7 +223,7 @@ renderFeedInLeftBar deleteModeOn feed =
                 , Css.margin4 (Css.px 0) (Css.px 10) (Css.px 0) (Css.px 0)
                 ]
             ]
-            [ text (String.fromInt (List.length feed.entries))
+            [ text (String.fromInt numUnseenEntries)
             ]
         , div
             [ css
@@ -438,7 +443,7 @@ renderEntries model =
 
                 Single s ->
                     model.feeds
-                        |> List.filter (\f -> f.data.url == s)
+                        |> List.filter (\f -> f.data == s)
                         |> List.map unpackEntries
                         |> List.concat
                         |> List.sortBy (\e -> e.entry.data.published |> Time.posixToMillis)
@@ -609,8 +614,24 @@ update msg model =
         DeleteFeedButtonPressed ->
             ( { model | deleteFeedMode = not model.deleteFeedMode }, Cmd.none )
 
-        SelectFeed s ->
-            ( { model | selectedFeed = s }, Cmd.none )
+        SelectFeed All ->
+            (   { model
+                    | selectedFeed = All
+                    , feeds = model.feeds
+                        |> List.map (\f -> { f | entries = List.filter (\e -> not e.seen) f.entries})}
+            , Cmd.none)
+
+        SelectFeed (Single s) ->
+            (   { model
+                    | selectedFeed = Single s
+                    , feeds = model.feeds
+                        |> List.map (\f ->
+                            if f.data == s
+                            then
+                                { f | entries = List.filter (\e -> not e.seen) f.entries }
+                            else f)
+                }
+            , Cmd.none )
 
         DeleteFeed feed ->
             ( { model
