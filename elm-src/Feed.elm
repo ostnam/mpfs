@@ -153,6 +153,7 @@ renderLeftBar model =
             , Css.width (Css.px 270)
             , Css.displayFlex
             , Css.flexDirection Css.column
+            , Css.property "user-select" "none"
             ]
         ]
         ([ renderOptions model
@@ -188,6 +189,7 @@ renderTotal model =
             , Css.borderStyle Css.hidden
             , Css.margin4 (Css.px 2) (Css.px 0) (Css.px 2) (Css.px 0)
             , Css.borderRadius (Css.px 5)
+            , Css.property "user-select" "none"
             ] ++ totalBgColor
         , onClick <| SelectFeed All
         ]
@@ -237,6 +239,7 @@ renderFeedInLeftBar model feed =
             , Css.overflow Css.hidden
             , Css.displayFlex
             , Css.flexDirection Css.row
+            , Css.property "user-select" "none"
             ] ++ bgColor
         , titleOnClick
         ]
@@ -301,6 +304,7 @@ renderOptions model =
             , Css.displayFlex
             , Css.flexFlow1 Css.row
             , Css.margin (Css.px 8)
+            , Css.property "user-select" "none"
             ]
         ]
         [ div
