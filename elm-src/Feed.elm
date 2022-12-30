@@ -15,7 +15,6 @@ import TimeZone
 import Types exposing (..)
 
 
-
 ------------------------------------------------------------
 ---------------------- Defining types ----------------------
 ------------------------------------------------------------
@@ -177,6 +176,10 @@ renderTotal model =
             case model.selectedFeed of
                 All -> [Css.backgroundColor (Css.rgb 173 216 230)]
                 _   -> []
+        entryOrEntries =
+            case totCount of
+                1 -> " entry"
+                _ -> " entries"
 
     in
     b
@@ -188,7 +191,7 @@ renderTotal model =
             ] ++ totalBgColor
         , onClick <| SelectFeed All
         ]
-        [ text (String.fromInt totCount ++ " entries") ]
+        [ text (String.fromInt totCount ++ entryOrEntries) ]
 
 
 -- Produces the Html element for a single feed, to be inserted in the left bar.
