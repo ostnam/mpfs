@@ -157,35 +157,46 @@ renderLeftBar model =
             ]
         ]
         ([ renderOptions model
-         , renderTotal model.feeds
+         , renderTotal model
          ]
-            ++ List.map (renderFeedInLeftBar model.deleteFeedMode) model.feeds
+            ++ List.map (renderFeedInLeftBar model) model.feeds
         )
 
 
 -- Renders the 'total' row on top of the feed list.
-renderTotal : List Feed -> Html Msg
-renderTotal l =
+renderTotal : Model -> Html Msg
+renderTotal model =
     let
         totCount =
-            List.map .entries l
+            List.map .entries model.feeds
                 |> List.map (List.filter (\e -> not e.seen))
                 |> List.map List.length
                 |> List.foldl (+) 0
+
+        totalBgColor =
+            case model.selectedFeed of
+                All -> [Css.backgroundColor (Css.rgb 173 216 230)]
+                _   -> []
+
     in
     b
-        [ css
-            [ Css.margin4 (Css.px 0) (Css.px 0) (Css.px 0) (Css.px 10)
-            ]
+        [ css <|
+            [ Css.padding4 (Css.px 0) (Css.px 0) (Css.px 0) (Css.px 10)
+            , Css.borderStyle Css.hidden
+            , Css.margin4 (Css.px 2) (Css.px 0) (Css.px 2) (Css.px 0)
+            , Css.borderRadius (Css.px 5)
+            ] ++ totalBgColor
         , onClick <| SelectFeed All
         ]
         [ text (String.fromInt totCount ++ " entries") ]
 
 
 -- Produces the Html element for a single feed, to be inserted in the left bar.
-renderFeedInLeftBar : Bool -> Feed -> Html Msg
-renderFeedInLeftBar deleteModeOn feed =
+renderFeedInLeftBar : Model -> Feed -> Html Msg
+renderFeedInLeftBar model feed =
     let
+        deleteModeOn = model.deleteFeedMode
+
         nameColor =
             if deleteModeOn then
                 Css.color (Css.rgb 255 0 0)
@@ -197,22 +208,34 @@ renderFeedInLeftBar deleteModeOn feed =
             onClick <|
                 if deleteModeOn then
                     DeleteFeed feed.data
-
                 else
                     SelectFeed (Single feed.data)
 
         numUnseenEntries = feed.entries
             |> List.filter (\e -> not e.seen)
             |> List.length
+
+        bgColor =
+            case model.selectedFeed of
+                All      -> []
+                Single f ->
+                    if feed.data == f
+                    then [Css.backgroundColor (Css.rgb 173 216 230)]
+                    else []
     in
     div
-        [ css
-            [ Css.padding4 (Css.px 0) (Css.px 20) (Css.px 0) (Css.px 20)
-            , Css.margin4 (Css.px 0) (Css.px 2) (Css.px 1) (Css.px 0)
+        [ css <|
+            [ Css.padding4 (Css.px 0) (Css.px 2) (Css.px 0) (Css.px 4)
+            , Css.margin4 (Css.px 0) (Css.px 2) (Css.px 4) (Css.px 4)
+            , Css.borderWidth (Css.px 1)
+            , Css.borderColor (Css.rgb 0 0 0)
+            , Css.borderRadius (Css.px 5)
+            , Css.borderStyle (Css.solid)
             , Css.overflow Css.hidden
             , Css.displayFlex
             , Css.flexDirection Css.row
-            ]
+            ] ++ bgColor
+        , titleOnClick
         ]
         [ div
             [ css
@@ -220,20 +243,18 @@ renderFeedInLeftBar deleteModeOn feed =
                 , Css.maxHeight Css.fitContent
                 , Css.minWidth Css.fitContent
                 , Css.maxWidth Css.fitContent
-                , Css.margin4 (Css.px 0) (Css.px 10) (Css.px 0) (Css.px 0)
+                , Css.margin4 (Css.px 0) (Css.px 8) (Css.px 0) (Css.px 0)
                 ]
             ]
             [ text (String.fromInt numUnseenEntries)
             ]
         , div
             [ css
-                [ Css.minHeight Css.fitContent
-                , Css.maxHeight Css.fitContent
-                , Css.minWidth Css.fitContent
-                , Css.maxWidth Css.fitContent
+                [ Css.textOverflow Css.ellipsis
+                , Css.whiteSpace Css.noWrap
+                , Css.overflow Css.hidden
                 , nameColor
                 ]
-            , titleOnClick
             ]
             [ text feed.data.name
             ]
