@@ -32,38 +32,48 @@ setUpDb conn = do
 
 
 --- DB queries
+-- | Returns the unseen items from the specified feed.
 getUnseenItems :: DB.Connection -> Types.Feed -> IO [Types.FeedItem]
 getUnseenItems conn feed = DB.query conn "SELECT * FROM entries WHERE feed = ? and seen = 0;" $ DB.Only feed.url
 
+-- | Saves the item to the database.
 saveItem :: DB.Connection -> Types.FeedItem -> IO ()
 saveItem conn = DB.execute conn "INSERT OR IGNORE INTO entries VALUES (?, ?, ?, ?, ?);"
 
+-- | Lists every feed in the database.
 getFeeds :: DB.Connection -> IO [Types.Feed]
 getFeeds conn = DB.query_ conn "SELECT * FROM feeds;"
 
+-- | Registers a feed into the database.
 addFeed :: DB.Connection -> Types.Feed -> IO ()
 addFeed conn = DB.execute conn "INSERT OR IGNORE INTO feeds VALUES (?, ?);"
 
+-- | Deletes a feed from the database.
 deleteFeed :: DB.Connection -> Types.Feed -> IO ()
 deleteFeed conn = DB.execute conn "DELETE FROM feeds WHERE name = ? AND url = ?;"
 
+-- | Marks an entry as seen.
 markSeen :: DB.Connection -> Types.FeedItem -> IO ()
 markSeen conn item = DB.execute conn "UPDATE entries SET seen = 1 WHERE link = ?;" $ DB.Only item.link
 
 
 --- Updating feeds
+-- | Fetch every item from the feed.
 refreshFeed :: Types.Feed -> IO [Types.FeedItem]
 refreshFeed f = do
   resp <- get $ T.unpack f.url
   mapM fillDefaults <$> Types.parseFeed $ resp ^. responseBody
     where fillDefaults = Types.toFeedItem "No title" "missing" f.url
 
+-- | Gets every subscribed feed from the database, then fetches their
+-- | items.
 refreshEveryFeed :: DB.Connection -> IO ()
 refreshEveryFeed conn = do
   feeds <- getFeeds conn
   items <- concat <$> mapM refreshFeed feeds
   mapM_ (saveItem conn) items
 
+-- | Refreshes every feed from the database, every 10 minutes.
 refreshLoop :: DB.Connection -> IO ()
 refreshLoop conn = do
   refreshEveryFeed conn

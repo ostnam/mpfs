@@ -17,6 +17,7 @@ import qualified Database.SQLite.Simple as DB
 import qualified Data
 import qualified Types
 
+-- Every endpoint requires auth.
 authSettings :: AuthSettings
 authSettings = "MPFS" { authIsProtected = \_ -> return True }
 
@@ -41,6 +42,7 @@ main = do
   conn <- DB.open dbPath
   Data.setUpDb conn
 
+  -- Fork a refresh loop thread.
   _ <- forkIO $ Data.refreshLoop conn
 
   scotty 8080 $ do
@@ -48,7 +50,10 @@ main = do
     middleware $ staticPolicy $ hasPrefix "static"
 
     get "/" $ redirect "/feeds"
+
     get "/feeds" $ setHeader "Content-Type" "text/html" >> file "templates/feeds.html"
+
+    -- Mark a feed item as seen.
     post "/seen" $ do
       reqBody <- body
       case Aeson.decode reqBody of
@@ -56,6 +61,7 @@ main = do
         _         -> return ()
       text ""
 
+    -- Subscribe to a feed.
     post "/subscriptions" $ do
       reqBody <- body
       case Aeson.decode reqBody of
@@ -63,6 +69,7 @@ main = do
         _ ->  return ()
       text ""
 
+    -- Unsubscribe to a feed.
     delete "/subscriptions" $ do
       reqBody <- body
       case Aeson.decode reqBody of
@@ -70,10 +77,12 @@ main = do
         _ ->  return ()
       text ""
 
+    -- Get the subscriptions.
     get "/subscriptions" $ do
       feeds <- liftIO $ Data.getFeeds conn
       json feeds
 
+    -- Get every unseen entry from every subscribed feed.
     post "/entries_batch" $ do
       reqBody <- body
       items <- case Aeson.decode reqBody of

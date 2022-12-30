@@ -4,12 +4,12 @@
 {-# LANGUAGE DeriveAnyClass #-}
 module Types where
 
+import Data.Aeson
 import Text.Feed.Import ( parseFeedSource )
 import Data.Maybe ( fromMaybe )
 import Data.Time.Format.ISO8601 ( iso8601ParseM )
 import Data.Time.RFC822 ( parseTimeRFC822 )
 import Control.Monad ( msum )
-import Data.Aeson
 import GHC.Generics ( Generic )
 import Data.ByteString.Lazy ( ByteString )
 import qualified Data.Text as T
@@ -21,8 +21,9 @@ import qualified Text.RSS1.Syntax as RSS1
 import qualified Database.SQLite.Simple as DB
 import qualified Data.Vector
 
+-- | Represents a single feed.
 data Feed = Feed 
-  { name :: T.Text
+  { name :: T.Text -- ^ Set by the user.
   , url :: T.Text
   } deriving (Generic, Show, FromJSON)
 
@@ -38,6 +39,7 @@ instance DB.FromRow Feed where
 instance DB.ToRow Feed where
   toRow f = [DB.SQLText f.name, DB.SQLText f.url]
 
+-- | Represents the values that can be obtained from parsing.
 data ParsedFeedItem = ParsedFeedItem
   { parsedTitle :: Maybe T.Text
   , parsedLink :: Maybe T.Text
@@ -45,6 +47,9 @@ data ParsedFeedItem = ParsedFeedItem
   } deriving (Generic, Show, ToJSON, FromJSON)
 
 
+{-| Converts a ParsedFeedItem to a regular FeedItem
+ - The missing values are filled by default ones.
+ -}
 toFeedItem :: T.Text
            -> T.Text
            -> T.Text
