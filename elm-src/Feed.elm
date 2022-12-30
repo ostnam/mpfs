@@ -538,6 +538,8 @@ renderEntry entry tz f =
                     , on "auxclick" <| Json.Decode.succeed <| SeenEntry entry.data f
                     , css
                         [ Css.margin4 (Css.px 0) Css.auto (Css.px 0) (Css.px 0)
+                        , Css.textDecoration Css.none
+                        , Css.color <| Css.rgb 0 0 0
                         ]
                     ]
                     [ b [] [ text entry.data.title ]
