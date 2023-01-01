@@ -22,16 +22,23 @@ view model =
 
         mainBody =
             u (viewBody model)
+
+        responsiveMetaTag =
+            u <| Html.Styled.node "meta"
+                [ Html.Styled.Attributes.attribute "name" "viewport"
+                , Html.Styled.Attributes.attribute "content" "width=device-width, initial-scale=1"
+                ]
+                []
     in
     case model.popup of
         None ->
-            Document "MPFS" [ mainBody ]
+            Document "MPFS" [ mainBody, responsiveMetaTag ]
 
         SettingsPopup ->
-            Document "MPFS" [ mainBody, u (renderSettingsPopup model) ]
+            Document "MPFS" [ mainBody, responsiveMetaTag, u (renderSettingsPopup model) ]
 
         AddFeedPopup ->
-            Document "MPFS" [ mainBody, u (renderAddFeedPopup model) ]
+            Document "MPFS" [ mainBody, responsiveMetaTag, u (renderAddFeedPopup model) ]
 
 
 
@@ -40,16 +47,7 @@ viewBody : Model -> Html.Styled.Html Msg
 viewBody model =
     div
         [ id "main"
-        , css
-            [ Css.fontFamily Css.sansSerif
-            , Css.fontSize (Css.px 20)
-            , Css.width (Css.pct 100)
-            , Css.minHeight (Css.vh 100)
-            , Css.backgroundColor <| getBgColor model
-            , Css.displayFlex
-            , Css.flexDirection Css.row
-            , Css.flex (Css.int 1)
-            ]
+        , css <| mainBodyStyle model
         ]
         [ renderLeftBar model
         , renderEntries model
@@ -62,14 +60,7 @@ renderLeftBar : Model -> Html Msg
 renderLeftBar model =
     div
         [ id "leftbar"
-        , css
-            [ Css.maxWidth (Css.px 400)
-            , Css.minWidth (Css.px 170)
-            , Css.width (Css.px 270)
-            , Css.displayFlex
-            , Css.flexDirection Css.column
-            , Css.property "user-select" "none"
-            ]
+        , css <| leftBarStyle model
         ]
         ([ renderOptions model
          , renderTotal model
@@ -88,10 +79,6 @@ renderTotal model =
                 |> List.map List.length
                 |> List.foldl (+) 0
 
-        totalBgColor =
-            case model.selectedFeed of
-                All -> [Css.backgroundColor <| getHighlightColor model]
-                _   -> []
         entryOrEntries =
             case totCount of
                 1 -> " entry"
@@ -99,14 +86,7 @@ renderTotal model =
 
     in
     b
-        [ css <|
-            [ Css.padding4 (Css.px 0) (Css.px 0) (Css.px 0) (Css.px 10)
-            , Css.borderStyle Css.hidden
-            , Css.margin4 (Css.px 2) (Css.px 0) (Css.px 2) (Css.px 0)
-            , Css.borderRadius (Css.px 5)
-            , Css.property "user-select" "none"
-            , Css.color <| getTextColor model
-            ] ++ totalBgColor
+        [ css <| totalEntriesStyle model
         , onClick <| SelectFeed All
         ]
         [ text (String.fromInt totCount ++ entryOrEntries) ]
@@ -129,27 +109,9 @@ renderFeedInLeftBar model feed =
             |> List.filter (\e -> not e.seen)
             |> List.length
 
-        bgColor =
-            case model.selectedFeed of
-                All      -> []
-                Single f ->
-                    if feed.data == f
-                    then [Css.backgroundColor <| getHighlightColor model]
-                    else []
     in
     div
-        [ css <|
-            [ Css.padding4 (Css.px 0) (Css.px 2) (Css.px 0) (Css.px 4)
-            , Css.margin4 (Css.px 0) (Css.px 2) (Css.px 4) (Css.px 4)
-            , Css.borderWidth (Css.px 1)
-            , Css.borderColor <| getTextColor model
-            , Css.borderRadius (Css.px 5)
-            , Css.borderStyle (Css.solid)
-            , Css.overflow Css.hidden
-            , Css.displayFlex
-            , Css.flexDirection Css.row
-            , Css.property "user-select" "none"
-            ] ++ bgColor
+        [ css <| feedLeftBarStyle model feed
         , titleOnClick
         ]
         [ div
@@ -405,7 +367,6 @@ renderEntries model =
         [ css
             [ Css.displayFlex
             , Css.flexDirection Css.column
-            , Css.width <| Css.px 1200
             ]
         ]
     <| case displayedEntries of
@@ -429,18 +390,8 @@ renderNoEntryMsg model =
 
 renderEntry : Entry -> FeedData -> Model -> Html Msg
 renderEntry entry parentFeed model =
-    let
-        bgColor = Css.backgroundColor <| getEntryBgColor entry.seen model
-    in
     div
-        [ css
-            [ Css.maxWidth (Css.px 1000)
-            , Css.padding4 (Css.px 0) (Css.px 2) (Css.px 0) (Css.px 6)
-            , Css.margin4 (Css.px 6) (Css.px 2) (Css.px 0) (Css.px 0)
-            , Css.overflow Css.hidden
-            , Css.outline Css.none
-            , bgColor
-            ]
+        [ css <| entryStyle model entry
         ]
         [ div
             [ css
@@ -463,6 +414,7 @@ renderEntry entry parentFeed model =
                         [ Css.margin4 (Css.px 0) Css.auto (Css.px 0) (Css.px 0)
                         , Css.textDecoration Css.none
                         , Css.color <| getTextColor model
+                        , Css.flexGrow (Css.int 1)
                         ]
                     ]
                     [ b [] [ text entry.data.title ]
@@ -483,7 +435,10 @@ renderEntry entry parentFeed model =
                 ]
             ]
         , div 
-            [ css [ Css.color <| getAltTextColor model ]
+            [ css
+                [ Css.color <| getAltTextColor model
+                , Css.property "text-size-adjust" "none"
+                ]
             ]
             [ text <| parentFeed.name ++ ", " ++ displayTime entry.data.published model.tz ]
         ]
