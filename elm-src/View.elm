@@ -179,8 +179,7 @@ renderFeedInLeftBar model feed =
 
 optionButtonStyle : List Css.Style
 optionButtonStyle =
-    [ Css.margin (Css.px 4)
-    , Css.height (Css.pct 100)
+    [ Css.height (Css.pct 100)
     ]
 
 
@@ -189,6 +188,7 @@ optionImgStyle model =
     [ Css.pointerEvents Css.none
     , Css.height (Css.pct 100)
     , Css.width (Css.pct 100)
+    , Css.property "object-fit" "scale-down"
     ] 
     ++ if model.nightMode 
         then [ Css.property "filter" "invert(1)" ]
@@ -216,8 +216,9 @@ renderOptions model =
             [ Css.height (Css.px 30)
             , Css.displayFlex
             , Css.flexFlow1 Css.row
-            , Css.margin (Css.px 8)
+            , Css.margin (Css.px 4)
             , Css.property "user-select" "none"
+            , Css.property "gap" "4px"
             ]
         ]
         [ div
