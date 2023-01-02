@@ -422,7 +422,7 @@ renderEntry entry parentFeed model =
                 , div
                     [ css
                         [ Css.height (Css.px 25)
-                        , Css.fontSize (Css.px 30)
+                        , Css.fontSize (Css.px 25)
                         , Css.textAlign Css.right
                         , Css.displayFlex
                         , Css.margin (Css.px 0)
@@ -430,7 +430,7 @@ renderEntry entry parentFeed model =
                         ]
                     , onClick <| DeleteEntryButtonPressed entry.data parentFeed
                     ]
-                    [ text "🞫"
+                    [ text "X"
                     ]
                 ]
             ]
