@@ -28,6 +28,11 @@ type PopupState
     | SettingsPopup
 
 
+type alias TimeZone =
+    { name : String
+    , tz : Time.Zone
+    }
+
 type alias Model =
     { feeds : List Feed
     , popup : PopupState
@@ -35,7 +40,7 @@ type alias Model =
     , addFeedUrl : String
     , deleteFeedMode : Bool
     , selectedFeed : FeedSelected
-    , tz : Time.Zone
+    , tz : TimeZone
     , pendingUpdateResponse : Bool
     , nightMode : Bool
     }
@@ -43,7 +48,16 @@ type alias Model =
 
 defaultModel : Model
 defaultModel =
-    Model [] None "" "" False All Time.utc True False
+    { feeds = []
+    , popup = None
+    , addFeedName = ""
+    , addFeedUrl = ""
+    , deleteFeedMode = False
+    , selectedFeed = All
+    , tz = TimeZone "UTC" Time.utc
+    , pendingUpdateResponse = True
+    , nightMode = False
+    }
 
 
 type Msg
@@ -62,7 +76,7 @@ type Msg
     | SeenEntry EntryData FeedData
     | DeleteEntryButtonPressed EntryData FeedData
     | SubscriptionsJsonClicked
-    | GotTimeZone Time.Zone
+    | GotTimeZone TimeZone
     | ToggledNightMode
 
 

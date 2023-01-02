@@ -191,5 +191,5 @@ update msg model =
 timeZoneHandler : Result TimeZone.Error ( String, Time.Zone ) -> Msg
 timeZoneHandler r =
     GotTimeZone <| case r of
-        Err _      -> Time.utc
-        Ok (_, tz) -> tz
+        Err _         -> TimeZone "UTC" Time.utc
+        Ok (name, tz) -> TimeZone name tz

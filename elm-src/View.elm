@@ -444,10 +444,10 @@ renderEntry entry parentFeed model =
         ]
 
 
-displayTime : Time.Posix -> Time.Zone -> String
+displayTime : Time.Posix -> TimeZone -> String
 displayTime t tz =
     let
-        day = case Time.toWeekday tz t of
+        day = case Time.toWeekday tz.tz t of
             Time.Mon -> "Mon"
             Time.Tue -> "Tue"
             Time.Wed -> "Wed"
@@ -456,9 +456,9 @@ displayTime t tz =
             Time.Sat -> "Sat"
             Time.Sun -> "Sun"
 
-        dayNum = String.fromInt <| Time.toDay tz t
+        dayNum = String.fromInt <| Time.toDay tz.tz t
 
-        month = case Time.toMonth tz t of
+        month = case Time.toMonth tz.tz t of
             Time.Jan -> "Jan"
             Time.Feb -> "Feb"
             Time.Mar -> "Mar"
@@ -476,10 +476,10 @@ displayTime t tz =
             "0" ++ str
             else str
 
-        year = Time.toYear tz t |> String.fromInt |> pad
-        h = Time.toHour tz t |> String.fromInt |> pad
-        m = Time.toMinute tz t |> String.fromInt |> pad
-        s = Time.toSecond tz t |> String.fromInt |> pad
+        year = Time.toYear tz.tz t |> String.fromInt |> pad
+        h = Time.toHour tz.tz t |> String.fromInt |> pad
+        m = Time.toMinute tz.tz t |> String.fromInt |> pad
+        s = Time.toSecond tz.tz t |> String.fromInt |> pad
     in
-    day ++ " " ++ dayNum ++ " " ++ month ++ " " ++ year ++ " " ++ h ++ ":" ++ m ++ ":" ++ s
+    day ++ " " ++ dayNum ++ " " ++ month ++ " " ++ year ++ " " ++ h ++ ":" ++ m ++ ":" ++ s ++ " (" ++ tz.name ++ ")"
 
