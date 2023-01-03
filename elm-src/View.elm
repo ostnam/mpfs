@@ -421,8 +421,9 @@ renderEntry entry parentFeed model =
                     ]
                 , div
                     [ css
-                        [ Css.height (Css.px 25)
-                        , Css.fontSize (Css.px 25)
+                        [ Css.height (Css.px 35)
+                        , Css.width (Css.px 35)
+                        , Css.fontSize (Css.px 30)
                         , Css.textAlign Css.right
                         , Css.displayFlex
                         , Css.margin (Css.px 0)
