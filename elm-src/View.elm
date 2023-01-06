@@ -335,6 +335,12 @@ renderSettingsPopup model =
                 ]
                 [ text "Load subscriptions from JSON."
                 ]
+            , br [] []
+            , button
+                [ onClick SaveSubscriptions
+                ]
+                [ text "Save subscriptions as JSON"
+                ]
             ]
         ]
 

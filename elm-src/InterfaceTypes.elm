@@ -78,6 +78,7 @@ type Msg
     | SubscriptionsJsonClicked
     | GotTimeZone TimeZone
     | ToggledNightMode
+    | SaveSubscriptions
 
 
 addFeeds : List Feed -> List FeedData -> List Feed

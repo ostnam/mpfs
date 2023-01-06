@@ -43,6 +43,12 @@ feedDataEncoder feed =
         ]
 
 
+feedDataListToJson : List FeedData -> String
+feedDataListToJson list =
+    Encode.list feedDataEncoder list
+    |> Encode.encode 0
+
+
 entryDataEncoder : EntryData -> Encode.Value
 entryDataEncoder entry =
     Encode.object

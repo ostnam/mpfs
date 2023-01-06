@@ -5,6 +5,7 @@ import Http
 import Task
 import Time
 import TimeZone
+import File.Download
 import Api exposing (..)
 import Types exposing (..)
 import InterfaceTypes exposing (..)
@@ -185,6 +186,13 @@ update msg model =
 
         ToggledNightMode ->
             ( { model | nightMode = not model.nightMode }, Cmd.none )
+
+        SaveSubscriptions ->
+            let subs = model.feeds
+                    |> List.map .data
+                    |> feedDataListToJson
+            in
+                ( model, File.Download.string "subscriptions.json" "application/json" subs)
 
 
 
