@@ -56,7 +56,7 @@ defaultModel =
     , selectedFeed = All
     , tz = TimeZone "UTC" Time.utc
     , pendingUpdateResponse = True
-    , nightMode = False
+    , nightMode = True
     }
 
 
