@@ -3,6 +3,7 @@ module InterfaceTypes exposing (..)
 import Types exposing (..)
 import Time
 import Http
+import File exposing (File)
 import Api exposing (..)
 
 type alias Entry =
@@ -79,6 +80,8 @@ type Msg
     | GotTimeZone TimeZone
     | ToggledNightMode
     | SaveSubscriptions
+    | ImportedSubscriptions File
+    | LoadedImportedSubscriptions String
 
 
 addFeeds : List Feed -> List FeedData -> List Feed

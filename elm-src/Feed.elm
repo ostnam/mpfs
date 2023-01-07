@@ -10,6 +10,9 @@ import Api exposing (..)
 import Types exposing (..)
 import InterfaceTypes exposing (..)
 import View exposing (..)
+import File
+import File.Select
+import Json.Decode
 
 ------------------------------------------------------------
 ---------------------- Main function -----------------------
@@ -172,7 +175,7 @@ update msg model =
             ( { model | popup = SettingsPopup }, Cmd.none )
 
         SubscriptionsJsonClicked ->
-            ( model, Cmd.none )
+            ( model, File.Select.file ["application/json"] ImportedSubscriptions )
 
         RefreshButtonPressed ->
             ( { model | pendingUpdateResponse = True }
@@ -193,6 +196,17 @@ update msg model =
                     |> feedDataListToJson
             in
                 ( model, File.Download.string "subscriptions.json" "application/json" subs)
+
+        ImportedSubscriptions file ->
+            (model, Task.perform LoadedImportedSubscriptions (File.toString file))
+
+        LoadedImportedSubscriptions str ->
+            case Json.Decode.decodeString feedDataListDecoder str of
+                Ok subs ->
+                    ({ model | feeds = addFeeds model.feeds subs },
+                     Cmd.map ApiMessage <| registerFeeds subs)
+                Err _ ->
+                    (model, Cmd.none)
 
 
 
