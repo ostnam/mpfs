@@ -435,6 +435,7 @@ renderEntry entry parentFeed model =
                         , Css.margin (Css.px 0)
                         , Css.property "user-select" "none"
                         , Css.color <| getTextColor model
+                        , Css.flexShrink (Css.int 0)
                         ]
                     , onClick <| DeleteEntryButtonPressed entry.data parentFeed
                     ]
