@@ -1,9 +1,9 @@
 module View exposing (..)
 
-
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (..)
 import Html.Styled.Events exposing (..)
+import Html.Styled.Keyed exposing (lazyNode)
 import Json.Decode
 import Browser exposing (Document)
 import Css.Animations
@@ -368,16 +368,22 @@ renderEntries model =
                         |> List.concat
                         |> List.sortBy (\e -> e.entry.data.published |> Time.posixToMillis)
                         |> List.reverse
-    in
-    div
-        [ css
-            [ Css.displayFlex
-            , Css.flexDirection Css.column
+
+        -- Attributes of the container that holds every entry
+        entriesContainerAttributes =
+            [ css
+                [ Css.displayFlex
+                , Css.flexDirection Css.column
+                ]
             ]
-        ]
-    <| case displayedEntries of
-        [] -> [renderNoEntryMsg model]
-        ls -> List.map (\x -> renderEntry x.entry x.feed model) ls
+    in case displayedEntries of
+        [] -> div entriesContainerAttributes
+                 [renderNoEntryMsg model]
+        ls -> lazyNode
+                "div"
+                entriesContainerAttributes
+                (\x -> renderEntry x.entry x.feed model)
+                <| List.map (\x -> (uniqueId x.entry, x)) ls
 
 
 renderNoEntryMsg : Model -> Html Msg
@@ -393,6 +399,7 @@ renderNoEntryMsg model =
         ]
         [ text "No entry available in current feed"
         ]
+
 
 renderEntry : Entry -> FeedData -> Model -> Html Msg
 renderEntry entry parentFeed model =
@@ -492,3 +499,15 @@ displayTime t tz =
     in
     day ++ " " ++ dayNum ++ " " ++ month ++ " " ++ year ++ " " ++ h ++ ":" ++ m ++ ":" ++ s ++ " (" ++ tz.name ++ ")"
 
+
+{-| Returns a pseudo-unique, valid HTML id.
+    IDs must solely contain alphanumeric chars, and start with a letter.
+-}
+uniqueId : Entry -> String
+uniqueId e = let raw = e.data.link ++ e.data.title ++ e.data.parentFeedUrl
+    in String.cons 'a' <| String.map toValidIDChar raw
+
+{-| Converts the input to a char that can be part of an HTML id, unless it already was.
+-}
+toValidIDChar : Char -> Char
+toValidIDChar c = if Char.isAlphaNum c then c else 'j' -- j is the rarest english char
