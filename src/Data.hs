@@ -7,6 +7,8 @@ import Network.Wreq ( get, responseBody )
 import Control.Lens ( (^.) )
 import Text.RawString.QQ ( r )
 import Control.Concurrent ( threadDelay )
+import Network.HTTP.Client ( HttpException )
+import Control.Exception.Base ( catch )
 import qualified Data.Text as T
 import qualified Database.SQLite.Simple as DB
 import qualified Types
@@ -56,7 +58,6 @@ deleteFeed conn = DB.execute conn "DELETE FROM feeds WHERE name = ? AND url = ?;
 markSeen :: DB.Connection -> Types.FeedItem -> IO ()
 markSeen conn item = DB.execute conn "UPDATE entries SET seen = 1 WHERE link = ?;" $ DB.Only item.link
 
-
 --- Updating feeds
 -- | Fetch every item from the feed.
 refreshFeed :: Types.Feed -> IO [Types.FeedItem]
@@ -65,12 +66,21 @@ refreshFeed f = do
   mapM fillDefaults <$> Types.parseFeed $ resp ^. responseBody
     where fillDefaults = Types.toFeedItem "No title" "missing" f.url
 
+-- | Handling exceptions
+-- Currently ignores the exception, returning an empty list.
+httpExceptionHandler :: HttpException -> IO [Types.FeedItem]
+httpExceptionHandler _ = pure []
+
+-- | refreshFeed, but handles HTTP exceptions
+refreshFeedChecked :: Types.Feed -> IO [Types.FeedItem]
+refreshFeedChecked f = catch (refreshFeed f) httpExceptionHandler
+
 -- | Gets every subscribed feed from the database, then fetches their
 -- | items.
 refreshEveryFeed :: DB.Connection -> IO ()
 refreshEveryFeed conn = do
   feeds <- getFeeds conn
-  items <- concat <$> mapM refreshFeed feeds
+  items <- concat <$> mapM refreshFeedChecked feeds
   mapM_ (saveItem conn) items
 
 -- | Refreshes every feed from the database, every 10 minutes.
