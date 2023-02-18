@@ -6,9 +6,10 @@ module Data where
 import Network.Wreq ( get, responseBody )
 import Control.Lens ( (^.) )
 import Text.RawString.QQ ( r )
-import Control.Concurrent ( threadDelay )
 import Network.HTTP.Client ( HttpException )
 import Control.Exception.Base ( catch )
+import Control.Concurrent.MVar ( MVar, takeMVar )
+import System.Timeout ( timeout )
 import qualified Data.Text as T
 import qualified Database.SQLite.Simple as DB
 import qualified Types
@@ -84,8 +85,8 @@ refreshEveryFeed conn = do
   mapM_ (saveItem conn) items
 
 -- | Refreshes every feed from the database, every 10 minutes.
-refreshLoop :: DB.Connection -> IO ()
-refreshLoop conn = do
+refreshLoop :: DB.Connection -> MVar () -> IO ()
+refreshLoop conn mvar = do
+  _ <- timeout (1000000 * 60 * 10) (takeMVar mvar)
   refreshEveryFeed conn
-  threadDelay $ 1000000 * 60 * 10
-  refreshLoop conn
+  refreshLoop conn mvar

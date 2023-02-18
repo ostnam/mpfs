@@ -10,6 +10,7 @@ import Data.ByteString.Internal (c2w)
 import Network.Wai.Middleware.Static
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent ( forkIO )
+import Control.Concurrent.MVar ( newMVar, tryPutMVar )
 import Data.Maybe ( fromMaybe )
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString as BS
@@ -42,8 +43,9 @@ main = do
   conn <- DB.open dbPath
   Data.setUpDb conn
 
-  -- Fork a refresh loop thread.
-  _ <- forkIO $ Data.refreshLoop conn
+  -- Initialize the thread that refreshes the feeds and the DB
+  refreshSignal <- newMVar ()
+  _ <- forkIO $ Data.refreshLoop conn refreshSignal
 
   scotty 8080 $ do
     middleware $ auth userId sessionId
@@ -87,7 +89,7 @@ main = do
       reqBody <- body
       items <- case Aeson.decode reqBody of
         Just (feeds :: [Types.Feed]) -> do
-          _ <- liftIO $ forkIO $ Data.refreshEveryFeed conn
+          _ <- liftIO $ tryPutMVar refreshSignal ()
           concat <$> mapM (liftIO . Data.getUnseenItems conn) feeds
         _ -> return  []
       json items
