@@ -14,19 +14,23 @@ import System.Timeout ( timeout )
 import qualified Data.Text as T
 import qualified Database.SQLite.Simple as DB
 import qualified Types
+import Control.Concurrent (threadDelay)
+import Data.Foldable (traverse_)
 
 --- DB setup
 setUpDb :: DB.Connection -> IO ()
 setUpDb conn = do
   DB.execute_ conn
-    [r|CREATE TABLE IF NOT EXISTS entries (
-      title     text NOT NULL,
-      link      text NOT NULL,
-      published text NOT NULL,
-      seen      int  NOT NULL,
-      feed      text NOT NULL,
-      CONSTRAINT uniqs UNIQUE (title, link, feed)
-    );|]
+    [r|
+      CREATE TABLE IF NOT EXISTS entries (
+        title     text NOT NULL,
+        link      text NOT NULL,
+        published text NOT NULL,
+        seen      int  NOT NULL,
+        feed      text NOT NULL,
+        CONSTRAINT uniqs UNIQUE (title, link, feed)
+     );
+    |]
 
   DB.execute_ conn
     [r|CREATE TABLE IF NOT EXISTS feeds (
@@ -107,7 +111,7 @@ refreshEveryFeed conn = do
 -- | Refreshes every feed from the database, every 10 minutes.
 refreshLoop :: DB.Connection -> MVar () -> IO ()
 refreshLoop conn mvar = do
-  _ <- timeout (1000000 * 60 * 10) (takeMVar mvar)
+  _ <- timeout (1_000_000 * 60 * 10) (takeMVar mvar)
   refreshEveryFeed conn
   refreshLoop conn mvar
 
