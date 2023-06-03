@@ -46,6 +46,7 @@ main = do
   -- Initialize the thread that refreshes the feeds and the DB
   refreshSignal <- newMVar ()
   _ <- forkIO $ Data.refreshLoop conn refreshSignal
+  _ <- forkIO $ Data.cleanupLoop conn
 
   scotty 8080 $ do
     middleware $ auth userId sessionId

@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE NumericUnderscores #-}
 module Data where
 
 import Network.Wreq ( get, responseBody )
@@ -59,6 +60,25 @@ deleteFeed conn = DB.execute conn "DELETE FROM feeds WHERE name = ? AND url = ?;
 markSeen :: DB.Connection -> Types.FeedItem -> IO ()
 markSeen conn item = DB.execute conn "UPDATE entries SET seen = 1 WHERE link = ?;" $ DB.Only item.link
 
+-- | Only keep 1000 latest entries for every subscribed feed
+cleanupDbEntries :: DB.Connection -> IO ()
+cleanupDbEntries conn = do
+  feeds <- getFeeds conn
+  traverse_ (cleanUpFeed conn) feeds
+
+-- | Only keep 1000 latest entries for the given feed
+cleanUpFeed :: DB.Connection -> Types.Feed -> IO ()
+cleanUpFeed conn feed = DB.execute conn
+  [r|
+    DELETE FROM entries
+    WHERE feed = ? AND link NOT IN (
+      SELECT link
+      FROM entries
+      WHERE feed = ?
+      ORDER BY published DESC
+      LIMIT 1000);
+  |] (feed.url, feed.url)
+
 --- Updating feeds
 -- | Fetch every item from the feed.
 refreshFeed :: Types.Feed -> IO [Types.FeedItem]
@@ -90,3 +110,9 @@ refreshLoop conn mvar = do
   _ <- timeout (1000000 * 60 * 10) (takeMVar mvar)
   refreshEveryFeed conn
   refreshLoop conn mvar
+
+cleanupLoop :: DB.Connection -> IO ()
+cleanupLoop conn = do
+  cleanupDbEntries conn
+  threadDelay (1_000_000 * 60 * 60 * 24) -- sleep 1 day
+  cleanupLoop conn
