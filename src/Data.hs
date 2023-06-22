@@ -4,18 +4,20 @@
 {-# LANGUAGE NumericUnderscores #-}
 module Data where
 
-import Network.Wreq ( get, responseBody )
-import Control.Lens ( (^.) )
-import Text.RawString.QQ ( r )
-import Network.HTTP.Client ( HttpException )
-import Control.Exception.Base ( catch )
+import Control.Concurrent (threadDelay)
 import Control.Concurrent.MVar ( MVar, takeMVar )
+import Control.Exception.Base ( catch )
+import Data.Foldable (traverse_)
 import System.Timeout ( timeout )
+
+import Control.Lens ( (^.) )
 import qualified Data.Text as T
 import qualified Database.SQLite.Simple as DB
+import Network.HTTP.Client ( HttpException )
+import Network.Wreq ( get, responseBody )
+import Text.RawString.QQ ( r )
+
 import qualified Types
-import Control.Concurrent (threadDelay)
-import Data.Foldable (traverse_)
 
 --- DB setup
 setUpDb :: DB.Connection -> IO ()

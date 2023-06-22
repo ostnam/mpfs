@@ -2,19 +2,21 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main (main) where
 
-import Web.Scotty
-import Network.Wai.Middleware.HttpAuth
-import System.Environment (getEnv, lookupEnv)
-import Network.Wai ( Middleware )
-import Data.ByteString.Internal (c2w)
-import Network.Wai.Middleware.Static
-import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent ( forkIO )
 import Control.Concurrent.MVar ( newMVar, tryPutMVar )
+import Control.Monad.IO.Class (liftIO)
 import Data.Maybe ( fromMaybe )
+import System.Environment (getEnv, lookupEnv)
+
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString as BS
+import Data.ByteString.Internal (c2w)
 import qualified Database.SQLite.Simple as DB
+import Network.Wai ( Middleware )
+import Network.Wai.Middleware.HttpAuth
+import Network.Wai.Middleware.Static
+import Web.Scotty
+
 import qualified Data
 import qualified Types
 

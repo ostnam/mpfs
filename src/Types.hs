@@ -2,24 +2,26 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE Strict #-}
 module Types where
 
-import Data.Aeson
-import Text.Feed.Import ( parseFeedSource )
-import Data.Maybe ( fromMaybe )
-import Data.Time.Format.ISO8601 ( iso8601ParseM )
-import Data.Time.RFC822 ( parseTimeRFC822 )
 import Control.Monad ( msum )
+import Data.Maybe ( fromMaybe )
 import GHC.Generics ( Generic )
+
+import Data.Aeson
 import Data.ByteString.Lazy ( ByteString )
 import qualified Data.Text as T
 import qualified Data.Time as Time
-import qualified Text.Feed.Types as FTypes
+import Data.Time.Format.ISO8601 ( iso8601ParseM )
+import Data.Time.RFC822 ( parseTimeRFC822 )
+import qualified Data.Vector
+import qualified Database.SQLite.Simple as DB
 import qualified Text.Atom.Feed as Atom
+import Text.Feed.Import ( parseFeedSource )
+import qualified Text.Feed.Types as FTypes
 import qualified Text.RSS.Syntax as RSS
 import qualified Text.RSS1.Syntax as RSS1
-import qualified Database.SQLite.Simple as DB
-import qualified Data.Vector
 
 -- | Represents a single feed.
 data Feed = Feed 
