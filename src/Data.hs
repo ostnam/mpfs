@@ -30,7 +30,7 @@ setUpDb conn = do
         published text NOT NULL,
         seen      int  NOT NULL,
         feed      text NOT NULL,
-        CONSTRAINT uniqs UNIQUE (title, link, feed)
+        CONSTRAINT uniqs UNIQUE (link, feed)
      );
     |]
 
