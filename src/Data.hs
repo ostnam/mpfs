@@ -7,7 +7,7 @@ module Data where
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.MVar ( MVar, takeMVar )
 import Control.Exception.Base ( catch )
-import Data.Foldable (traverse_)
+import Data.Foldable (for_, traverse_)
 import System.Timeout ( timeout )
 
 import Control.Lens ( (^.) )
@@ -107,8 +107,9 @@ refreshFeedChecked f = catch (refreshFeed f) httpExceptionHandler
 refreshEveryFeed :: DB.Connection -> IO ()
 refreshEveryFeed conn = do
   feeds <- getFeeds conn
-  items <- concat <$> mapM refreshFeedChecked feeds
-  mapM_ (saveItem conn) items
+  for_ feeds $ \feed -> do
+    items <- refreshFeedChecked feed
+    mapM_ (saveItem conn) items
 
 -- | Refreshes every feed from the database, every 10 minutes.
 refreshLoop :: DB.Connection -> MVar () -> IO ()

@@ -43,4 +43,4 @@ RUN dpkg -i /tmp/libgmp.deb && rm /tmp/libgmp.deb
 COPY --from=front /opt/front/templates templates
 COPY --from=back /opt/build/bin .
 COPY static static
-CMD ["/opt/app/mpfs-exe"]
+CMD ["/opt/app/mpfs-exe", "+RTS", "-M100m", "-RTS"]
