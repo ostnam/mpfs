@@ -1,19 +1,23 @@
 module View exposing (..)
 
+import Browser exposing (Document)
+import Css
+import Css.Animations
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (..)
 import Html.Styled.Events exposing (..)
 import Html.Styled.Keyed exposing (lazyNode)
+import InterfaceTypes exposing (..)
 import Json.Decode
-import Browser exposing (Document)
-import Css.Animations
-import Css
+import Themes exposing (..)
 import Time
 import Types exposing (..)
-import InterfaceTypes exposing (..)
-import Themes exposing (..)
+
+
 
 -- Top-level function that renders the entire document.
+
+
 view : Model -> Document Msg
 view model =
     let
@@ -24,25 +28,39 @@ view model =
             u (viewBody model)
 
         responsiveMetaTag =
-            u <| Html.Styled.node "meta"
-                [ Html.Styled.Attributes.attribute "name" "viewport"
-                , Html.Styled.Attributes.attribute "content" "width=device-width, initial-scale=1"
-                ]
-                []
+            u <|
+                Html.Styled.node "meta"
+                    [ Html.Styled.Attributes.attribute "name" "viewport"
+                    , Html.Styled.Attributes.attribute "content" "width=device-width, initial-scale=1"
+                    ]
+                    []
+
+        totalNumEntries =
+            List.map (\f -> List.length f.entries) model.feeds
+                |> List.sum
+
+        title =
+            if totalNumEntries > 0 then
+                "MPFS (" ++ String.fromInt totalNumEntries ++ ")"
+
+            else
+                "MPFS"
     in
     case model.popup of
         None ->
-            Document "MPFS" [ mainBody, responsiveMetaTag ]
+            Document title [ mainBody, responsiveMetaTag ]
 
         SettingsPopup ->
-            Document "MPFS" [ mainBody, responsiveMetaTag, u (renderSettingsPopup model) ]
+            Document title [ mainBody, responsiveMetaTag, u (renderSettingsPopup model) ]
 
         AddFeedPopup ->
-            Document "MPFS" [ mainBody, responsiveMetaTag, u (renderAddFeedPopup model) ]
+            Document title [ mainBody, responsiveMetaTag, u (renderAddFeedPopup model) ]
 
 
 
 -- Renders the main body: everything outside of popups.
+
+
 viewBody : Model -> Html.Styled.Html Msg
 viewBody model =
     div
@@ -56,6 +74,8 @@ viewBody model =
 
 
 -- Renders the left bar.
+
+
 renderLeftBar : Model -> Html Msg
 renderLeftBar model =
     div
@@ -69,7 +89,10 @@ renderLeftBar model =
         )
 
 
+
 -- Renders the 'total' row on top of the feed list.
+
+
 renderTotal : Model -> Html Msg
 renderTotal model =
     let
@@ -81,9 +104,11 @@ renderTotal model =
 
         entryOrEntries =
             case totCount of
-                1 -> " entry"
-                _ -> " entries"
+                1 ->
+                    " entry"
 
+                _ ->
+                    " entries"
     in
     b
         [ css <| totalEntriesStyle model
@@ -92,23 +117,28 @@ renderTotal model =
         [ text (String.fromInt totCount ++ entryOrEntries) ]
 
 
+
 -- Produces the Html element for a single feed, to be inserted in the left bar.
+
+
 renderFeedInLeftBar : Model -> Feed -> Html Msg
 renderFeedInLeftBar model feed =
     let
-        deleteModeOn = model.deleteFeedMode
+        deleteModeOn =
+            model.deleteFeedMode
 
         titleOnClick =
             onClick <|
                 if deleteModeOn then
                     DeleteFeed feed.data
+
                 else
                     SelectFeed (Single feed.data)
 
-        numUnseenEntries = feed.entries
-            |> List.filter (\e -> not e.seen)
-            |> List.length
-
+        numUnseenEntries =
+            feed.entries
+                |> List.filter (\e -> not e.seen)
+                |> List.length
     in
     div
         [ css <| feedLeftBarStyle model feed
@@ -151,24 +181,29 @@ optionImgStyle model =
     , Css.height (Css.pct 100)
     , Css.width (Css.pct 100)
     , Css.property "object-fit" "scale-down"
-    ] 
-    ++ if model.nightMode 
-        then [ Css.property "filter" "invert(1)" ]
-        else []
+    ]
+        ++ (if model.nightMode then
+                [ Css.property "filter" "invert(1)" ]
+
+            else
+                []
+           )
+
 
 refreshButtonAnimation : Model -> List Css.Style
-refreshButtonAnimation model = if model.pendingUpdateResponse
-    then
+refreshButtonAnimation model =
+    if model.pendingUpdateResponse then
         [ Css.animationDuration (Css.sec 1)
         , Css.animationIterationCount Css.infinite
-        , Css.animationName
-            <| Css.Animations.keyframes
-                [ (  0, [Css.Animations.property "rotate" "0deg"])
-                , (100, [Css.Animations.property "rotate" "360deg"])
+        , Css.animationName <|
+            Css.Animations.keyframes
+                [ ( 0, [ Css.Animations.property "rotate" "0deg" ] )
+                , ( 100, [ Css.Animations.property "rotate" "360deg" ] )
                 ]
         ]
-    else []
 
+    else
+        []
 
 
 renderOptions : Model -> Html Msg
@@ -244,7 +279,7 @@ addFeedPopupContentStyle model =
     ]
 
 
-popupTopBar : String -> Model  -> Html Msg
+popupTopBar : String -> Model -> Html Msg
 popupTopBar title model =
     div
         [ css
@@ -269,10 +304,13 @@ popupTopBar title model =
             ]
             [ img
                 [ css <|
-                    optionImgStyle model 
-                    ++ if model.nightMode 
-                    then [ Css.property "filter" "invert(1)" ]
-                    else []
+                    optionImgStyle model
+                        ++ (if model.nightMode then
+                                [ Css.property "filter" "invert(1)" ]
+
+                            else
+                                []
+                           )
                 , src "static/images/close.png"
                 ]
                 []
@@ -376,14 +414,19 @@ renderEntries model =
                 , Css.flexDirection Css.column
                 ]
             ]
-    in case displayedEntries of
-        [] -> div entriesContainerAttributes
-                 [renderNoEntryMsg model]
-        ls -> lazyNode
+    in
+    case displayedEntries of
+        [] ->
+            div entriesContainerAttributes
+                [ renderNoEntryMsg model ]
+
+        ls ->
+            lazyNode
                 "div"
                 entriesContainerAttributes
                 (\x -> renderEntry x.entry x.feed model)
-                <| List.map (\x -> (uniqueId x.entry, x)) ls
+            <|
+                List.map (\x -> ( uniqueId x.entry, x )) ls
 
 
 renderNoEntryMsg : Model -> Html Msg
@@ -393,7 +436,7 @@ renderNoEntryMsg model =
             [ Css.maxWidth (Css.px 1000)
             , Css.textAlign Css.center
             , Css.padding (Css.px 50)
-            , Css.fontStyle (Css.italic)
+            , Css.fontStyle Css.italic
             , Css.color <| getTextColor model
             ]
         ]
@@ -450,7 +493,7 @@ renderEntry entry parentFeed model =
                     ]
                 ]
             ]
-        , div 
+        , div
             [ css
                 [ Css.color <| getAltTextColor model
                 , Css.property "text-size-adjust" "none"
@@ -463,51 +506,114 @@ renderEntry entry parentFeed model =
 displayTime : Time.Posix -> TimeZone -> String
 displayTime t tz =
     let
-        day = case Time.toWeekday tz.tz t of
-            Time.Mon -> "Mon"
-            Time.Tue -> "Tue"
-            Time.Wed -> "Wed"
-            Time.Thu -> "Thu"
-            Time.Fri -> "Fri"
-            Time.Sat -> "Sat"
-            Time.Sun -> "Sun"
+        day =
+            case Time.toWeekday tz.tz t of
+                Time.Mon ->
+                    "Mon"
 
-        dayNum = String.fromInt <| Time.toDay tz.tz t
+                Time.Tue ->
+                    "Tue"
 
-        month = case Time.toMonth tz.tz t of
-            Time.Jan -> "Jan"
-            Time.Feb -> "Feb"
-            Time.Mar -> "Mar"
-            Time.Apr -> "Apr"
-            Time.May -> "May"
-            Time.Jun -> "Jun"
-            Time.Jul -> "Jul"
-            Time.Aug -> "Aug"
-            Time.Sep -> "Sep"
-            Time.Oct -> "Oct"
-            Time.Nov -> "Nov"
-            Time.Dec -> "Dec"
+                Time.Wed ->
+                    "Wed"
 
-        pad str = if String.length str < 2 then
-            "0" ++ str
-            else str
+                Time.Thu ->
+                    "Thu"
 
-        year = Time.toYear tz.tz t |> String.fromInt |> pad
-        h = Time.toHour tz.tz t |> String.fromInt |> pad
-        m = Time.toMinute tz.tz t |> String.fromInt |> pad
-        s = Time.toSecond tz.tz t |> String.fromInt |> pad
+                Time.Fri ->
+                    "Fri"
+
+                Time.Sat ->
+                    "Sat"
+
+                Time.Sun ->
+                    "Sun"
+
+        dayNum =
+            String.fromInt <| Time.toDay tz.tz t
+
+        month =
+            case Time.toMonth tz.tz t of
+                Time.Jan ->
+                    "Jan"
+
+                Time.Feb ->
+                    "Feb"
+
+                Time.Mar ->
+                    "Mar"
+
+                Time.Apr ->
+                    "Apr"
+
+                Time.May ->
+                    "May"
+
+                Time.Jun ->
+                    "Jun"
+
+                Time.Jul ->
+                    "Jul"
+
+                Time.Aug ->
+                    "Aug"
+
+                Time.Sep ->
+                    "Sep"
+
+                Time.Oct ->
+                    "Oct"
+
+                Time.Nov ->
+                    "Nov"
+
+                Time.Dec ->
+                    "Dec"
+
+        pad str =
+            if String.length str < 2 then
+                "0" ++ str
+
+            else
+                str
+
+        year =
+            Time.toYear tz.tz t |> String.fromInt |> pad
+
+        h =
+            Time.toHour tz.tz t |> String.fromInt |> pad
+
+        m =
+            Time.toMinute tz.tz t |> String.fromInt |> pad
+
+        s =
+            Time.toSecond tz.tz t |> String.fromInt |> pad
     in
     day ++ " " ++ dayNum ++ " " ++ month ++ " " ++ year ++ " " ++ h ++ ":" ++ m ++ ":" ++ s ++ " (" ++ tz.name ++ ")"
 
 
 {-| Returns a pseudo-unique, valid HTML id.
-    IDs must solely contain alphanumeric chars, and start with a letter.
+IDs must solely contain alphanumeric chars, and start with a letter.
 -}
 uniqueId : Entry -> String
-uniqueId e = let raw = e.data.link ++ e.data.title ++ e.data.parentFeedUrl
-    in String.cons 'a' <| String.map toValidIDChar raw
+uniqueId e =
+    let
+        raw =
+            e.data.link ++ e.data.title ++ e.data.parentFeedUrl
+    in
+    String.cons 'a' <| String.map toValidIDChar raw
+
 
 {-| Converts the input to a char that can be part of an HTML id, unless it already was.
 -}
 toValidIDChar : Char -> Char
-toValidIDChar c = if Char.isAlphaNum c then c else 'j' -- j is the rarest english char
+toValidIDChar c =
+    if Char.isAlphaNum c then
+        c
+
+    else
+        'j'
+
+
+
+-- j is the rarest english char

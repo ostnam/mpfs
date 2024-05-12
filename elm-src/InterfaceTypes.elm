@@ -1,10 +1,11 @@
 module InterfaceTypes exposing (..)
 
-import Types exposing (..)
-import Time
-import Http
-import File exposing (File)
 import Api exposing (..)
+import File exposing (File)
+import Http
+import Time
+import Types exposing (..)
+
 
 type alias Entry =
     { data : EntryData
@@ -33,6 +34,7 @@ type alias TimeZone =
     { name : String
     , tz : Time.Zone
     }
+
 
 type alias Model =
     { feeds : List Feed
@@ -128,9 +130,10 @@ updateEntries entries feeds =
             entryData.parentFeedUrl == feed.data.url
 
         updateFn entries2 feed =
-            { feed | entries =
-                List.filter (sameFeed feed) entries2
-                    |> List.map (\e -> Entry e False)
+            { feed
+                | entries =
+                    List.filter (sameFeed feed) entries2
+                        |> List.map (\e -> Entry e False)
             }
     in
     List.map (updateFn entries) feeds

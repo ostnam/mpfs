@@ -1,80 +1,111 @@
 module Themes exposing (..)
 
-import InterfaceTypes exposing (..)
 import Css
 import Css.Media
+import InterfaceTypes exposing (..)
+
 
 mainTextColorDayMode : Css.Color
-mainTextColorDayMode = Css.rgb 0 0 0
+mainTextColorDayMode =
+    Css.rgb 0 0 0
+
 
 mainTextColorNightMode : Css.Color
-mainTextColorNightMode = Css.rgb 237 227 187
+mainTextColorNightMode =
+    Css.rgb 237 227 187
+
 
 altTextColorDayMode : Css.Color
-altTextColorDayMode = Css.rgb 20 20 20
+altTextColorDayMode =
+    Css.rgb 20 20 20
+
 
 altTextColorNightMode : Css.Color
-altTextColorNightMode = Css.rgb 219 202 129
+altTextColorNightMode =
+    Css.rgb 219 202 129
 
 
 getBgColor : Model -> Css.Color
 getBgColor model =
-    if model.nightMode
-    then Css.rgb 32 32 32
-    else Css.rgb 248 248 248
+    if model.nightMode then
+        Css.rgb 32 32 32
+
+    else
+        Css.rgb 248 248 248
 
 
 getTextColor : Model -> Css.Color
 getTextColor model =
-    if model.nightMode
-    then mainTextColorNightMode
-    else mainTextColorDayMode
+    if model.nightMode then
+        mainTextColorNightMode
+
+    else
+        mainTextColorDayMode
 
 
 getAltTextColor : Model -> Css.Color
 getAltTextColor model =
-    if model.nightMode
-    then altTextColorNightMode
-    else altTextColorDayMode
+    if model.nightMode then
+        altTextColorNightMode
+
+    else
+        altTextColorDayMode
+
 
 getHighlightColor : Model -> Css.Color
 getHighlightColor model =
-    if model.nightMode
-    then Css.rgb 24 65 78
-    else Css.rgb 173 216 230
+    if model.nightMode then
+        Css.rgb 24 65 78
+
+    else
+        Css.rgb 173 216 230
 
 
 getFeedNameColor : Model -> Css.Color
 getFeedNameColor model =
-    case (model.nightMode, model.deleteFeedMode) of
-        (True, True)   -> Css.rgb 204 16 66
-        (True, False)  -> mainTextColorNightMode
-        (False, True)  -> Css.rgb 255 0 0
-        (False, False) -> mainTextColorDayMode
+    case ( model.nightMode, model.deleteFeedMode ) of
+        ( True, True ) ->
+            Css.rgb 204 16 66
+
+        ( True, False ) ->
+            mainTextColorNightMode
+
+        ( False, True ) ->
+            Css.rgb 255 0 0
+
+        ( False, False ) ->
+            mainTextColorDayMode
 
 
 getEntryBgColor : Bool -> Model -> Css.Color
 getEntryBgColor isSeen model =
-    case (model.nightMode, isSeen) of
-        (True, True)   -> Css.rgb 72 72 72
-        (True, False)  -> Css.rgb 52 52 52
-        (False, True)  -> Css.rgb 217 216 216
-        (False, False) -> Css.rgb 242 240 240
+    case ( model.nightMode, isSeen ) of
+        ( True, True ) ->
+            Css.rgb 72 72 72
+
+        ( True, False ) ->
+            Css.rgb 52 52 52
+
+        ( False, True ) ->
+            Css.rgb 217 216 216
+
+        ( False, False ) ->
+            Css.rgb 242 240 240
 
 
 isDesktopMode : List Css.Media.MediaQuery
 isDesktopMode =
     [ Css.Media.only Css.Media.screen
-            [ Css.Media.minWidth (Css.px 1200)
-            ]
+        [ Css.Media.minWidth (Css.px 1200)
+        ]
     ]
 
 
 isPhoneMode : List Css.Media.MediaQuery
 isPhoneMode =
     [ Css.Media.only Css.Media.screen
-            [ Css.Media.maxWidth (Css.px 1200)
-            ]
+        [ Css.Media.maxWidth (Css.px 1200)
+        ]
     ]
 
 
@@ -127,8 +158,11 @@ totalEntriesStyle model =
     let
         totalBgColor =
             case model.selectedFeed of
-                All -> [Css.backgroundColor <| getHighlightColor model]
-                _   -> []
+                All ->
+                    [ Css.backgroundColor <| getHighlightColor model ]
+
+                _ ->
+                    []
     in
     [ Css.Media.withMedia isDesktopMode <|
         [ Css.padding4 (Css.px 0) (Css.px 0) (Css.px 0) (Css.px 10)
@@ -137,7 +171,8 @@ totalEntriesStyle model =
         , Css.borderRadius (Css.px 5)
         , Css.property "user-select" "none"
         , Css.color <| getTextColor model
-        ] ++ totalBgColor
+        ]
+            ++ totalBgColor
     , Css.Media.withMedia isPhoneMode <|
         [ Css.padding4 (Css.px 0) (Css.px 0) (Css.px 0) (Css.px 10)
         , Css.borderStyle Css.hidden
@@ -150,7 +185,8 @@ totalEntriesStyle model =
         , Css.displayFlex
         , Css.alignItems Css.center
         , Css.justifyContent Css.center
-        ] ++ totalBgColor
+        ]
+            ++ totalBgColor
     ]
 
 
@@ -159,11 +195,15 @@ feedLeftBarStyle model feed =
     let
         bgColor =
             case model.selectedFeed of
-                All      -> []
+                All ->
+                    []
+
                 Single f ->
-                    if feed.data == f
-                    then [Css.backgroundColor <| getHighlightColor model]
-                    else []
+                    if feed.data == f then
+                        [ Css.backgroundColor <| getHighlightColor model ]
+
+                    else
+                        []
     in
     [ Css.Media.withMedia isDesktopMode <|
         [ Css.padding4 (Css.px 0) (Css.px 2) (Css.px 0) (Css.px 4)
@@ -171,12 +211,13 @@ feedLeftBarStyle model feed =
         , Css.borderWidth (Css.px 1)
         , Css.borderColor <| getTextColor model
         , Css.borderRadius (Css.px 5)
-        , Css.borderStyle (Css.solid)
+        , Css.borderStyle Css.solid
         , Css.overflow Css.hidden
         , Css.displayFlex
         , Css.flexDirection Css.row
         , Css.property "user-select" "none"
-        ] ++ bgColor
+        ]
+            ++ bgColor
     , Css.Media.withMedia isPhoneMode <|
         [ Css.display Css.none
         ]
@@ -186,7 +227,8 @@ feedLeftBarStyle model feed =
 entryStyle : Model -> Entry -> List Css.Style
 entryStyle model entry =
     let
-        bgColor = Css.backgroundColor <| getEntryBgColor entry.seen model
+        bgColor =
+            Css.backgroundColor <| getEntryBgColor entry.seen model
     in
     [ Css.Media.withMedia isDesktopMode <|
         [ Css.width (Css.px 1000)

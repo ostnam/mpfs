@@ -1,11 +1,11 @@
 module Types exposing (..)
 
+import Iso8601
 import Json.Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode
 import Time
-import Iso8601
 
 
 type alias FeedData =
@@ -46,17 +46,17 @@ feedDataEncoder feed =
 feedDataListToJson : List FeedData -> String
 feedDataListToJson list =
     Encode.list feedDataEncoder list
-    |> Encode.encode 0
+        |> Encode.encode 0
 
 
 entryDataEncoder : EntryData -> Encode.Value
 entryDataEncoder entry =
     Encode.object
-        [ ("title", Encode.string entry.title)
-        , ("link", Encode.string entry.link)
-        , ("published", Encode.string <| Iso8601.fromTime entry.published)
-        , ("seen", Encode.bool entry.seen)
-        , ("parentFeedUrl", Encode.string entry.parentFeedUrl)
+        [ ( "title", Encode.string entry.title )
+        , ( "link", Encode.string entry.link )
+        , ( "published", Encode.string <| Iso8601.fromTime entry.published )
+        , ( "seen", Encode.bool entry.seen )
+        , ( "parentFeedUrl", Encode.string entry.parentFeedUrl )
         ]
 
 

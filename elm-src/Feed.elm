@@ -1,22 +1,26 @@
 module Feed exposing (..)
 
+import Api exposing (..)
 import Browser
+import File
+import File.Download
+import File.Select
 import Http
+import InterfaceTypes exposing (..)
+import Json.Decode
 import Task
 import Time
 import TimeZone
-import File.Download
-import Api exposing (..)
 import Types exposing (..)
-import InterfaceTypes exposing (..)
 import View exposing (..)
-import File
-import File.Select
-import Json.Decode
+
+
 
 ------------------------------------------------------------
 ---------------------- Main function -----------------------
 ------------------------------------------------------------
+
+
 main : Program () Model Msg
 main =
     Browser.document
@@ -32,28 +36,36 @@ subscriptions _ =
     Sub.none
 
 
+
 ------------------------------------------------------------
 --------------------------- Init ---------------------------
 ------------------------------------------------------------
+
+
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( defaultModel
-    , runInit )
+    , runInit
+    )
 
 
 runInit : Cmd Msg
-runInit = Cmd.batch
-    [ Task.attempt timeZoneHandler TimeZone.getZone
-    , Http.get
-        { url = "/subscriptions"
-        , expect = Http.expectJson ReceivedSubscribedFeeds feedDataListDecoder
-        }
-    ]
+runInit =
+    Cmd.batch
+        [ Task.attempt timeZoneHandler TimeZone.getZone
+        , Http.get
+            { url = "/subscriptions"
+            , expect = Http.expectJson ReceivedSubscribedFeeds feedDataListDecoder
+            }
+        ]
+
 
 
 ------------------------------------------------------------
 -------------------- Updating the model --------------------
 ------------------------------------------------------------
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -88,23 +100,31 @@ update msg model =
             ( { model | deleteFeedMode = not model.deleteFeedMode }, Cmd.none )
 
         SelectFeed All ->
-            (   { model
-                    | selectedFeed = All
-                    , feeds = model.feeds
-                        |> List.map (\f -> { f | entries = List.filter (\e -> not e.seen) f.entries})}
-            , Cmd.none)
+            ( { model
+                | selectedFeed = All
+                , feeds =
+                    model.feeds
+                        |> List.map (\f -> { f | entries = List.filter (\e -> not e.seen) f.entries })
+              }
+            , Cmd.none
+            )
 
         SelectFeed (Single s) ->
-            (   { model
-                    | selectedFeed = Single s
-                    , feeds = model.feeds
-                        |> List.map (\f ->
-                            if f.data == s
-                            then
-                                { f | entries = List.filter (\e -> not e.seen) f.entries }
-                            else f)
-                }
-            , Cmd.none )
+            ( { model
+                | selectedFeed = Single s
+                , feeds =
+                    model.feeds
+                        |> List.map
+                            (\f ->
+                                if f.data == s then
+                                    { f | entries = List.filter (\e -> not e.seen) f.entries }
+
+                                else
+                                    f
+                            )
+              }
+            , Cmd.none
+            )
 
         DeleteFeed feed ->
             ( { model
@@ -163,10 +183,12 @@ update msg model =
                     ( { model
                         | feeds = updateEntries entries model.feeds
                         , pendingUpdateResponse = False
-                        }, Cmd.none )
+                      }
+                    , Cmd.none
+                    )
 
                 Entries (Err _) ->
-                    ( { model | pendingUpdateResponse = False }  , Cmd.none )
+                    ( { model | pendingUpdateResponse = False }, Cmd.none )
 
                 NoVal _ ->
                     ( model, Cmd.none )
@@ -175,7 +197,7 @@ update msg model =
             ( { model | popup = SettingsPopup }, Cmd.none )
 
         SubscriptionsJsonClicked ->
-            ( model, File.Select.file ["application/json"] ImportedSubscriptions )
+            ( model, File.Select.file [ "application/json" ] ImportedSubscriptions )
 
         RefreshButtonPressed ->
             ( { model | pendingUpdateResponse = True }
@@ -191,27 +213,34 @@ update msg model =
             ( { model | nightMode = not model.nightMode }, Cmd.none )
 
         SaveSubscriptions ->
-            let subs = model.feeds
-                    |> List.map .data
-                    |> feedDataListToJson
+            let
+                subs =
+                    model.feeds
+                        |> List.map .data
+                        |> feedDataListToJson
             in
-                ( model, File.Download.string "subscriptions.json" "application/json" subs)
+            ( model, File.Download.string "subscriptions.json" "application/json" subs )
 
         ImportedSubscriptions file ->
-            (model, Task.perform LoadedImportedSubscriptions (File.toString file))
+            ( model, Task.perform LoadedImportedSubscriptions (File.toString file) )
 
         LoadedImportedSubscriptions str ->
             case Json.Decode.decodeString feedDataListDecoder str of
                 Ok subs ->
-                    ({ model | feeds = addFeeds model.feeds subs },
-                     Cmd.map ApiMessage <| registerFeeds subs)
-                Err _ ->
-                    (model, Cmd.none)
+                    ( { model | feeds = addFeeds model.feeds subs }
+                    , Cmd.map ApiMessage <| registerFeeds subs
+                    )
 
+                Err _ ->
+                    ( model, Cmd.none )
 
 
 timeZoneHandler : Result TimeZone.Error ( String, Time.Zone ) -> Msg
 timeZoneHandler r =
-    GotTimeZone <| case r of
-        Err _         -> TimeZone "UTC" Time.utc
-        Ok (name, tz) -> TimeZone name tz
+    GotTimeZone <|
+        case r of
+            Err _ ->
+                TimeZone "UTC" Time.utc
+
+            Ok ( name, tz ) ->
+                TimeZone name tz
