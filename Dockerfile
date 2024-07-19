@@ -1,4 +1,4 @@
-FROM fpco/stack-build:lts-20.19 as dependencies
+FROM fpco/stack-build:lts-22.22 as dependencies
 RUN mkdir /opt/build
 WORKDIR /opt/build
 
@@ -9,7 +9,7 @@ RUN mv libgmp*.deb libgmp.deb
 COPY stack.yaml package.yaml stack.yaml.lock /opt/build/
 RUN stack build --system-ghc --dependencies-only
 
-FROM fpco/stack-build:lts-20.19 as back
+FROM fpco/stack-build:lts-22.22 as back
 COPY --from=dependencies /root/.stack /root/.stack
 COPY . /opt/build
 WORKDIR /opt/build
